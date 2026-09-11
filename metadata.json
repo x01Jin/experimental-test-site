@@ -1,0 +1,7 @@
+{
+  "name": "The Infinite Creep",
+  "description": "An infinite psychological horror descent into corrupted system madness with escalating jumpscares, violent screen tremors, and procedural audio screams.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
