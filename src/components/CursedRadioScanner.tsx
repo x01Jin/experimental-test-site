@@ -165,7 +165,7 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
         </div>
       ) : (
         <div className="p-2 rounded bg-neutral-900/60 border border-neutral-800 text-neutral-500 text-[10px] italic">
-          [nothing here. hiss and a hum.]
+          [nothing.]
         </div>
       )}
       <audio ref={audioRef} preload="none" />
