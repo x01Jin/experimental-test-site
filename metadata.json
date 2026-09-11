@@ -1,6 +1,6 @@
 {
-  "name": "The Infinite Creep",
-  "description": "An infinite psychological horror descent into corrupted system madness with escalating jumpscares, violent screen tremors, and procedural audio screams.",
+  "name": "Experimental Test Site",
+  "description": "Experimental test site. Keep going down.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

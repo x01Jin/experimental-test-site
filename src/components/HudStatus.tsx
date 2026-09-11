@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, AlertTriangle, Skull, Activity, Flame } from 'lucide-react';
+import { Volume2, VolumeX, AlertTriangle, Skull, Activity } from 'lucide-react';
 import { DepthState } from '../types/horror';
 import { horrorAudioEngine } from '../audio/horrorAudioEngine';
 import { formatDepth, getBPM } from '../utils/depthScale';
@@ -15,13 +15,11 @@ import { formatDepth, getBPM } from '../utils/depthScale';
 interface HudStatusProps {
   depthState: DepthState;
   isViolentShock?: boolean;
-  onTriggerManualJumpscare: () => void;
 }
 
 export const HudStatus: React.FC<HudStatusProps> = ({
   depthState,
-  isViolentShock = false,
-  onTriggerManualJumpscare
+  isViolentShock = false
 }) => {
   const [isMuted, setIsMuted] = useState(horrorAudioEngine.getIsMuted());
   const [volume, setVolume] = useState(horrorAudioEngine.getVolume());
@@ -78,7 +76,7 @@ export const HudStatus: React.FC<HudStatusProps> = ({
         {/* Left: Depth and Sector Tier */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <span className="text-neutral-500">DEPTH:</span>
+            <span className="text-neutral-500">down:</span>
             <span className="text-white font-bold tracking-wider text-sm">
               {formatDepth(depthState.depthMeters)}
             </span>
@@ -94,7 +92,7 @@ export const HudStatus: React.FC<HudStatusProps> = ({
             ) : (
               <AlertTriangle className="w-3.5 h-3.5" />
             )}
-            <span>STRATA: {depthState.tier}</span>
+            <span>{depthState.tier}</span>
           </div>
         </div>
 
@@ -102,7 +100,7 @@ export const HudStatus: React.FC<HudStatusProps> = ({
         <div className="flex items-center gap-4">
           {/* Corruption Meter */}
           <div className="flex items-center gap-2">
-            <span className="text-neutral-400">CORRUPTION:</span>
+            <span className="text-neutral-400">rot:</span>
             <div className="w-24 sm:w-32 h-2.5 bg-neutral-900 border border-neutral-800 rounded-full overflow-hidden p-0.5">
               <div
                 className="h-full bg-gradient-to-r from-emerald-500 via-amber-500 to-red-600 transition-all duration-300"
@@ -121,7 +119,7 @@ export const HudStatus: React.FC<HudStatusProps> = ({
           </div>
         </div>
 
-        {/* Right: Audio Controls and Panic Button */}
+        {/* Right: Audio Controls */}
         <div className="flex items-center gap-2.5">
           {/* Audio Mute & Slider */}
           <div className="flex items-center gap-1.5 bg-neutral-900/90 border border-neutral-800 px-2 py-1 rounded">
@@ -129,7 +127,7 @@ export const HudStatus: React.FC<HudStatusProps> = ({
               id="hud-mute-btn"
               onClick={handleMuteToggle}
               className="text-neutral-300 hover:text-white p-1 transition-colors cursor-pointer"
-              title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
+              title={isMuted ? 'sound on' : 'sound off'}
             >
               {isMuted ? (
                 <VolumeX className="w-4 h-4 text-red-400" />
@@ -145,21 +143,9 @@ export const HudStatus: React.FC<HudStatusProps> = ({
               value={isMuted ? 0 : volume}
               onChange={handleVolumeChange}
               className="w-16 h-1 bg-neutral-700 accent-red-500 cursor-pointer"
-              title="Volume Slider"
+              title="loudness"
             />
           </div>
-
-          {/* Manual Panic Shock Button */}
-          <button
-            id="hud-panic-btn"
-            onClick={onTriggerManualJumpscare}
-            className={`flex items-center gap-1 bg-red-900/60 hover:bg-red-800 border border-red-700 text-red-200 hover:text-white px-2.5 py-1 rounded transition-all active:scale-95 text-[11px] font-bold uppercase tracking-wider cursor-pointer ${
-              isViolentShock ? 'animate-artifact-spasm shadow-red-600 shadow-md' : ''
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">PANIC SHOCK</span>
-          </button>
         </div>
       </div>
     </header>

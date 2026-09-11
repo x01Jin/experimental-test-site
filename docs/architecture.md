@@ -2,7 +2,7 @@
 
 ## Overview
 
-**The Infinite Creep** is designed as a client-side React 19 and TypeScript single-page application governed by strict single-purpose scripting standards. The application avoids external pre-baked audio or video assets by utilizing the browser's native **Web Audio API** and **HTML5 Canvas 2D API** for procedural sound synthesis, image manipulation, and biometric visualizers in real time.
+**Experimental Test Site** is a client-side React 19 + TypeScript single-page app. Sound is synthesized with Web Audio, visuals with Canvas 2D.
 
 ---
 

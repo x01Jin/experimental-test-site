@@ -56,13 +56,11 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
     for (let i = 0; i < count; i++) {
       const threshold = Math.floor(startThreshold + i * METERS_PER_ITEM);
 
-      // Interleave combinatorial procedural items with curated hand-crafted horror lore
-      if (i % 2 === 0) {
-        const proceduralItem = generateProceduralHorrorItem(threshold, i, batchCountRef.current);
-        newItems.push(proceduralItem);
+      // everything random: 3 in 4 procedural rolls, 1 in 4 a verbatim template
+      if (Math.random() < 0.75) {
+        newItems.push(generateProceduralHorrorItem(threshold, i, batchCountRef.current));
       } else {
-        const templateIdx = (batchCountRef.current * count + i) % HORROR_TEMPLATES.length;
-        const template: NarrativeTemplate = HORROR_TEMPLATES[templateIdx];
+        const template: NarrativeTemplate = HORROR_TEMPLATES[Math.floor(Math.random() * HORROR_TEMPLATES.length)];
 
         // Displacement and chaos scale with depth
         const maxDisp = Math.pow(corruptionFrac, 1.3) * 42;
@@ -74,8 +72,8 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
         const scale = 1 + (Math.random() - 0.5) * (corruptionFrac * 0.08);
 
         // Fetch correlated internet image specimen based on horror archetype
-        const imageSpecimen = getSpecimenForNarrativeType(template.type, threshold);
-        const chaosProfile = generateLayoutChaos(threshold, i, batchCountRef.current);
+        const imageSpecimen = getSpecimenForNarrativeType(template.type, Math.floor(Math.random() * 100000));
+        const chaosProfile = generateLayoutChaos(threshold, Math.floor(Math.random() * 1000), Math.floor(Math.random() * 100000));
 
         newItems.push({
           id: `item-${threshold}-${i}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -89,7 +87,7 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
           displacementY: dispY,
           rotation: rot,
           scale,
-          glitchSeverity: Math.min(1.2, corruptionFrac + (i / count) * 0.15),
+          glitchSeverity: Math.min(1.2, corruptionFrac + Math.random() * 0.25),
           chaosProfile
         });
       }
@@ -209,15 +207,15 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
       {/* Intro Header Section */}
       <section className="mb-12 text-center border-b border-neutral-800/80 pb-8 font-mono">
         <div className="inline-block bg-red-950/40 text-red-400 border border-red-900/60 px-3 py-1 rounded text-xs uppercase tracking-widest mb-3">
-          SECURITY LEVEL: RESTRICTED ARCHIVE
+          old archive
         </div>
         <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase mb-3">
-          SUB-SURFACE SECTOR 00
+          Experimental Test Site
         </h1>
         <p className="text-neutral-400 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-          You have established remote telemetry to the decommissioned deep memory substrate.
-          Visual artifacts and anomalous transmissions intensify as you descend into deeper strata.
-          Scroll down to descend into deeper strata.
+          sector 00. telemetry left on. don't count the doors.
+          <br />
+          keep scrolling if you want.
         </p>
       </section>
 
@@ -232,7 +230,7 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
             'organic-void-bleed'
           ];
           const patternType = patternTypes[idx % patternTypes.length];
-          const shouldRenderPattern = idx > 0 && idx % 4 === 0 && item.depthThreshold > 250;
+          const shouldRenderPattern = idx > 0 && idx % 6 === 0 && item.depthThreshold > 350;
 
           // Structural collapse caution ribbons slashing across the feed at depth
           const shouldRenderRibbon = idx > 0 && idx % 6 === 0 && item.depthThreshold > 450;
@@ -266,7 +264,7 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
               {shouldRenderVoid && (
                 <div className="py-8 sm:py-14 text-center select-none font-mono text-[10px] sm:text-xs text-red-600/70 tracking-[0.25em] uppercase pointer-events-none">
                   <div className="border-t border-b border-red-900/50 py-3 animate-pulse bg-red-950/10">
-                    --- [ANOMALOUS SPATIAL VOID // STRATA OFFSET {formatDepth(depthState.depthMeters)} // SECTOR RUPTURE DETECTED] ---
+                    --- [{formatDepth(depthState.depthMeters)} missing — tape cut] ---
                   </div>
                 </div>
               )}
@@ -286,7 +284,7 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
       <div className="mt-16 text-center font-mono">
         <div className="inline-flex items-center gap-2 text-red-500 text-xs uppercase tracking-widest animate-pulse">
           <span className="w-2 h-2 rounded-full bg-red-600" />
-          <span>DECOMPOSING DEEPER STRATA // SCROLL TO CONTINUE</span>
+          <span>keeps going. keep scrolling if you want.</span>
         </div>
       </div>
     </main>

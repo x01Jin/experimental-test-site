@@ -364,6 +364,11 @@ export function getSpecimenForNarrativeType(type: string, seed: number): Interne
       return getRandomInternetImage(seed, Math.random() > 0.5 ? 'specimen' : 'medical');
     case 'cosmic-aberration':
       return getRandomInternetImage(seed, 'cosmic');
+    case 'found-film':
+    case 'link-card':
+      return getRandomInternetImage(seed, 'liminal');
+    case 'found-audio':
+      return getRandomInternetImage(seed, 'analog-glitch');
     default:
       return getRandomInternetImage(seed);
   }

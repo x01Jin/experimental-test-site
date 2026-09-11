@@ -129,7 +129,7 @@ export const HeartbeatMonitor: React.FC<HeartbeatMonitorProps> = ({
       <div className="flex items-center justify-between mb-2 text-[10px] text-red-400">
         <div className="flex items-center gap-1.5 font-bold">
           <Activity className="w-3.5 h-3.5 animate-pulse text-red-500" />
-          <span>AUTONOMIC BIOMETRIC TELEMETRY</span>
+          <span>pulse. hold still</span>
         </div>
         <div className="flex items-center gap-1 text-[10px] font-bold text-red-300">
           <Heart className={`w-3.5 h-3.5 text-red-500 ${pulseActive ? 'scale-125 fill-current' : 'animate-pulse'}`} />
@@ -147,12 +147,12 @@ export const HeartbeatMonitor: React.FC<HeartbeatMonitorProps> = ({
           onClick={triggerManualPulse}
           className="flex-1 py-1.5 px-3 rounded bg-red-950/70 hover:bg-red-900 border border-red-700 text-red-200 text-[10px] uppercase font-bold tracking-wider cursor-pointer active:scale-95 transition-all"
         >
-          FORCE PULSE SYNCHRONIZATION
+          hold to sync
         </button>
 
         <div className="flex items-center gap-1 text-[9px] text-red-400/80 bg-neutral-900 px-2 py-1.5 rounded border border-neutral-800">
           <AlertOctagon className="w-3 h-3 text-red-500" />
-          <span>{corruptionLevel > 60 ? 'ARRHYTHMIA' : 'ELEVATED'}</span>
+          <span>{corruptionLevel > 60 ? 'bad' : 'fast'}</span>
         </div>
       </div>
     </div>

@@ -4,31 +4,36 @@
  * trigger synthesized heterodyne radio sweeps, and decode uncanny subterranean broadcasts.
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Radio, Signal, VolumeX, AlertTriangle } from 'lucide-react';
 import { horrorAudioEngine } from '../audio/horrorAudioEngine';
+import { AUDIO_CLIPS } from '../utils/foundVerbatim';
 
 interface CursedRadioScannerProps {
   initialFreq?: string;
   isViolentShock?: boolean;
 }
 
-const PHANTOM_SIGNALS: Record<number, { title: string; transcript: string }> = {
+const PHANTOM_SIGNALS: Record<number, { title: string; transcript: string; clip: number }> = {
   38: {
-    title: '38.0 kHz // SUBTERRANEAN CARRIER',
-    transcript: '...they are under the foundation... do not dig further... the earth has ribs...'
+    title: '38.0 khz — pipe mic',
+    transcript: '...drip... drip... then nothing... then dragging...',
+    clip: 6
   },
   114: {
-    title: '114.2 kHz // NUMBERS BEACON',
-    transcript: '4 - 9 - 0 - 2 - 8 - 1 ... REPEAT: NO ESCAPE FOR OBSERVER ... 4 - 9 - 0 ...'
+    title: '114.2 khz — numbers',
+    transcript: '4 - 9 - 0 - 2 ... repeat ... your street ... 4 - 9 - 0 ...',
+    clip: 0
   },
   240: {
-    title: '240.5 kHz // AIR TUBE WEAK MIC',
-    transcript: '[HEAVY WET INHALES] ...can anyone hear me... my eyes are gone...'
+    title: '240.5 khz — lift shaft',
+    transcript: '[wet inhale] ...hello? ...cable humming... is anyone up?',
+    clip: 3
   },
   388: {
-    title: '388.0 kHz // GEODETIC HYDROPHONE',
-    transcript: '[LOUD METALLIC GROAN] ...chamber pressure exceeding 500 atmospheres...'
+    title: '388.0 khz — sump',
+    transcript: '[groan] ...pressure up... wall sweating... get out of B...',
+    clip: 9
   }
 };
 
@@ -37,6 +42,30 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
 }) => {
   const [frequency, setFrequency] = useState(114);
   const [signalLocked, setSignalLocked] = useState(true);
+  const [nowPlaying, setNowPlaying] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const tuneTo = (clipIdx: number, label: string) => {
+    const audio = audioRef.current;
+    const clip = AUDIO_CLIPS[clipIdx % AUDIO_CLIPS.length];
+    if (!audio || !clip) return;
+    if (audio.src !== clip.url) {
+      audio.src = clip.url;
+      audio.load();
+    }
+    const playFromRandom = () => {
+      if (Number.isFinite(audio.duration) && audio.duration > 15) {
+        try {
+          audio.currentTime = 5 + Math.random() * (audio.duration - 10);
+        } catch { /* noop */ }
+      }
+      audio.volume = 0.5;
+      audio.play().catch(() => { /* locked until gesture */ });
+      setNowPlaying(label);
+    };
+    if (audio.readyState >= 1) playFromRandom();
+    else audio.onloadedmetadata = playFromRandom;
+  };
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
@@ -46,10 +75,15 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
     horrorAudioEngine.playRadioScannerDial(0.85);
 
     // Check if near any phantom signal within +/- 6 kHz
-    const matched = Object.keys(PHANTOM_SIGNALS).some(
-      freq => Math.abs(parseInt(freq, 10) - val) <= 6
+    const matched = Object.entries(PHANTOM_SIGNALS).find(
+      ([freq]) => Math.abs(parseInt(freq, 10) - val) <= 6
     );
-    setSignalLocked(matched);
+    setSignalLocked(!!matched);
+    if (matched) tuneTo(matched[1].clip, matched[1].title);
+    else {
+      audioRef.current?.pause();
+      setNowPlaying(null);
+    }
   };
 
   // Find active broadcast if matched
@@ -67,16 +101,16 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
       <div className="flex items-center justify-between mb-2 text-[10px] text-amber-400">
         <div className="flex items-center gap-1.5 font-bold">
           <Radio className="w-3.5 h-3.5 animate-pulse" />
-          <span>VLF RADIO TELEMETRY RECEIVER</span>
+          <span>old radio. it still picks up</span>
         </div>
         <div className="flex items-center gap-1">
           {signalLocked ? (
             <span className="flex items-center gap-1 text-emerald-400 text-[9px] font-bold">
-              <Signal className="w-3 h-3 animate-bounce" /> SIGNAL LOCKED
+              <Signal className="w-3 h-3 animate-bounce" /> caught something
             </span>
           ) : (
             <span className="flex items-center gap-1 text-neutral-500 text-[9px]">
-              <VolumeX className="w-3 h-3" /> STATIC NOISE
+              <VolumeX className="w-3 h-3" /> hiss
             </span>
           )}
         </div>
@@ -85,14 +119,14 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
       {/* Tuner Dial Display */}
       <div className="p-2 mb-2 rounded bg-black border border-amber-950/80 flex items-center justify-between">
         <div>
-          <span className="text-[10px] text-neutral-500 block">TUNED FREQUENCY</span>
+          <span className="text-[10px] text-neutral-500 block">tuned</span>
           <span className="text-sm font-bold text-amber-300 tracking-wider">
             {frequency.toFixed(1)} kHz
           </span>
         </div>
         <div className="text-right">
           <span className="text-[10px] text-neutral-500 block">BAND</span>
-          <span className="text-[10px] text-neutral-400 font-semibold">VERY LOW FREQ</span>
+          <span className="text-[10px] text-neutral-400 font-semibold">very low</span>
         </div>
       </div>
 
@@ -124,12 +158,18 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
           <p className="leading-snug italic font-mono text-[10px]">
             &quot;{activeBroadcast[1].transcript}&quot;
           </p>
+          {nowPlaying && (
+            <p className="mt-1 font-mono text-[9px] not-italic text-amber-400/70">
+              playing: {AUDIO_CLIPS[activeBroadcast[1].clip % AUDIO_CLIPS.length]?.label} — LibriVox
+            </p>
+          )}
         </div>
       ) : (
         <div className="p-2 rounded bg-neutral-900/60 border border-neutral-800 text-neutral-500 text-[10px] italic">
-          [No intelligible broadcast on this band. White noise hiss and distant electromagnetic echoes...]
+          [nothing here. hiss and a hum.]
         </div>
       )}
+      <audio ref={audioRef} preload="none" />
     </div>
   );
 };

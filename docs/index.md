@@ -1,6 +1,6 @@
-# The Infinite Creep Documentation Hub
+# Experimental Test Site Documentation Hub
 
-Welcome to the comprehensive technical and operational documentation for **The Infinite Creep**, an infinite procedural horror descent web application.
+Welcome to the dev notes for **Experimental Test Site**.
 
 ---
 

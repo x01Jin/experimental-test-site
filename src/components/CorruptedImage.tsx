@@ -55,23 +55,22 @@ export const CorruptedImage: React.FC<CorruptedImageProps> = ({
     };
   }, [specimen.url]);
 
-  // Redraw canvas when severity, hover state, or loaded state changes
+  // Redraw canvas when severity bucket, hover, or load changes.
+  // Bucketing avoids re-running the O(n) pixel loop on every scroll tick.
   useEffect(() => {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
 
-    const effectiveSeverity = Math.min(
-      1.2,
-      severity + (hoverTwitch ? 0.25 : 0)
-    );
+    const raw = Math.min(1.2, severity + (hoverTwitch ? 0.25 : 0));
+    const bucketed = raw < 0.15 ? 0.1 : raw < 0.35 ? 0.3 : raw < 0.6 ? 0.55 : raw < 0.85 ? 0.8 : 1.1;
 
     corruptImageOnCanvas(imageRef.current, canvas, {
-      severity: effectiveSeverity,
-      timeSeed: Date.now() + specimen.fallbackSeed,
+      severity: bucketed,
+      timeSeed: specimen.fallbackSeed * 1000 + Math.round(bucketed * 10),
       category: specimen.category,
-      enableDemonicFeatures: effectiveSeverity > 0.4
+      enableDemonicFeatures: bucketed > 0.4
     });
-  }, [severity, hoverTwitch, isLoaded, renderTick, specimen]);
+  }, [Math.round(severity * 5), hoverTwitch, isLoaded, renderTick, specimen]);
 
   // Handle pointer hover
   const handleMouseEnter = () => {
@@ -177,7 +176,7 @@ export const CorruptedImage: React.FC<CorruptedImageProps> = ({
       <div className="mt-1.5 px-1 font-mono text-[11px] text-neutral-400 leading-snug flex items-baseline justify-between gap-2">
         <span className="italic">{specimen.caption}</span>
         <span className="text-[9px] uppercase text-red-500 font-bold whitespace-nowrap">
-          {severity > 0.6 ? '[SIGNAL COMPROMISED]' : '[ENCRYPTED REC]'}
+          {severity > 0.6 ? '[chewed]' : '[taped over]'}
         </span>
       </div>
     </div>

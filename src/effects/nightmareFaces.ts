@@ -4,6 +4,8 @@
  * glitch-sliced nightmarish entities directly to Canvas.
  */
 
+import { drawRealisticEye } from './realEye';
+
 export interface NightmareFaceOptions {
   width: number;
   height: number;
@@ -165,20 +167,20 @@ export function drawNightmareFace(
     ctx.fill();
   }
 
-  // Glitch Slices: Displace random horizontal bands across the face
-  const sliceCount = Math.floor(6 + intensity * 8);
+  // Glitch Slices: cheap canvas blits only (no getImageData — 60fps safe)
+  const sliceCount = Math.floor(3 + intensity * 4);
   for (let s = 0; s < sliceCount; s++) {
     const sliceY = Math.random() * height;
-    const sliceH = 4 + Math.random() * 20;
-    const sliceShift = (Math.random() - 0.5) * 45 * intensity;
-
-    const imgData = ctx.getImageData(0, Math.floor(sliceY), width, Math.floor(sliceH));
-    ctx.putImageData(imgData, Math.floor(sliceShift), Math.floor(sliceY));
+    const sliceH = 4 + Math.random() * 14;
+    const sliceShift = (Math.random() - 0.5) * 30 * intensity;
+    try {
+      ctx.drawImage(ctx.canvas, 0, sliceY, width, sliceH, sliceShift, sliceY, width, sliceH);
+    } catch { /* noop */ }
   }
 
-  // Random static noise overlay on top of face
-  const noiseCount = Math.floor(width * height * 0.008 * intensity);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+  // Sparse grain, capped
+  const noiseCount = Math.min(900, Math.floor(width * height * 0.002 * intensity));
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
   for (let n = 0; n < noiseCount; n++) {
     ctx.fillRect(Math.random() * width, Math.random() * height, 2, 2);
   }
@@ -188,6 +190,7 @@ export function drawNightmareFace(
 
 /**
  * Draws a single tracking bloodshot eye on a canvas
+ * Delegates to the realistic layered renderer (cached, 60fps-safe).
  */
 export function drawTrackingEye(
   ctx: CanvasRenderingContext2D,
@@ -198,74 +201,7 @@ export function drawTrackingEye(
   targetY: number,
   bloodshotIntensity = 0.5
 ): void {
-  ctx.save();
-
-  // Sclera (eyeball white, slightly yellowed/gray)
-  ctx.fillStyle = '#f0ede6';
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Eye shadow contour
-  const eyeGrad = ctx.createRadialGradient(cx, cy, radius * 0.6, cx, cy, radius);
-  eyeGrad.addColorStop(0, 'rgba(0,0,0,0)');
-  eyeGrad.addColorStop(1, 'rgba(60,10,10,0.7)');
-  ctx.fillStyle = eyeGrad;
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Red Capillaries / Veins branching into sclera
-  const veinCount = Math.floor(6 + bloodshotIntensity * 10);
-  ctx.strokeStyle = 'rgba(190, 20, 20, 0.75)';
-  ctx.lineWidth = 1.2;
-  for (let v = 0; v < veinCount; v++) {
-    const angle = (v / veinCount) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
-    const midR = radius * (0.4 + Math.random() * 0.3);
-    ctx.lineTo(
-      cx + Math.cos(angle + (Math.random() - 0.5) * 0.3) * midR,
-      cy + Math.sin(angle + (Math.random() - 0.5) * 0.3) * midR
-    );
-    ctx.stroke();
-  }
-
-  // Calculate pupil offset pointing towards target (mouse or touch)
-  const dx = targetX - cx;
-  const dy = targetY - cy;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  const maxPupilOffset = radius * 0.42;
-  const pupilAngle = Math.atan2(dy, dx);
-  const pupilDistance = Math.min(dist * 0.08, maxPupilOffset);
-
-  const pupilX = cx + Math.cos(pupilAngle) * pupilDistance;
-  const pupilY = cy + Math.sin(pupilAngle) * pupilDistance;
-
-  // Iris
-  const irisRadius = radius * 0.44;
-  const irisGrad = ctx.createRadialGradient(pupilX, pupilY, 2, pupilX, pupilY, irisRadius);
-  irisGrad.addColorStop(0, '#ff1a1a');
-  irisGrad.addColorStop(0.5, '#7a0505');
-  irisGrad.addColorStop(1, '#1a0000');
-
-  ctx.fillStyle = irisGrad;
-  ctx.beginPath();
-  ctx.arc(pupilX, pupilY, irisRadius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Pupil (Hollow, black)
-  const pupilRadius = irisRadius * 0.5;
-  ctx.fillStyle = '#000000';
-  ctx.beginPath();
-  ctx.arc(pupilX, pupilY, pupilRadius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Glint reflection
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-  ctx.beginPath();
-  ctx.arc(pupilX - pupilRadius * 0.35, pupilY - pupilRadius * 0.35, pupilRadius * 0.25, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
+  // Lazy import to avoid cycles — realEye has no deps
+  const seed = Math.round(cx + cy) % 97;
+  drawRealisticEye(ctx, cx, cy, radius, targetX, targetY, bloodshotIntensity, seed, 0);
 }

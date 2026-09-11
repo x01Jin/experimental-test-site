@@ -25,10 +25,22 @@ export const CrtVhsOverlay: React.FC<CrtVhsOverlayProps> = ({
     if (!ctx) return;
 
     let animId: number;
+    let lastFrame = 0;
     const w = (canvas.width = 160);
     const h = (canvas.height = 120);
 
-    const renderNoise = () => {
+    const renderNoise = (time: number) => {
+      animId = 0;
+      if (document.hidden) {
+        animId = requestAnimationFrame(renderNoise);
+        return;
+      }
+      // 12fps static — looks analog, costs nothing
+      if (time - lastFrame < 84) {
+        animId = requestAnimationFrame(renderNoise);
+        return;
+      }
+      lastFrame = time;
       const imgData = ctx.createImageData(w, h);
       const data = imgData.data;
       const noiseDensity = 0.04 + (corruptionLevel / 100) * 0.12;
@@ -49,8 +61,8 @@ export const CrtVhsOverlay: React.FC<CrtVhsOverlayProps> = ({
     };
 
     animId = requestAnimationFrame(renderNoise);
-    return () => cancelAnimationFrame(animId);
-  }, [corruptionLevel, isViolent]);
+    return () => { if (animId) cancelAnimationFrame(animId); };
+  }, [Math.round(corruptionLevel / 10), isViolent]);
 
   const rgbSplitAmount = Math.floor((corruptionLevel / 100) * 8) + (isViolent ? 12 : 0);
 

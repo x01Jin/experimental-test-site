@@ -29,6 +29,7 @@ export const AggressiveGlitchPattern: React.FC<AggressiveGlitchPatternProps> = (
   isViolentShock = false
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -37,10 +38,35 @@ export const AggressiveGlitchPattern: React.FC<AggressiveGlitchPatternProps> = (
     if (!ctx) return;
 
     let animId: number;
+    let lastFrame = 0;
+    let visible = true;
     const width = canvas.width;
     const height = canvas.height;
 
+    const io = new IntersectionObserver(
+      entries => {
+        visible = entries[0]?.isIntersecting ?? true;
+        if (visible && !animId) {
+          lastFrame = 0;
+          animId = requestAnimationFrame(render);
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    if (wrapRef.current) io.observe(wrapRef.current);
+
     const render = (time: number) => {
+      animId = 0;
+      if (!visible || document.hidden) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+      // ~20fps is plenty for interference lines
+      if (time - lastFrame < 50) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+      lastFrame = time;
       ctx.clearRect(0, 0, width, height);
 
       if (type === 'moire-lattice') {
@@ -132,8 +158,11 @@ export const AggressiveGlitchPattern: React.FC<AggressiveGlitchPatternProps> = (
 
     animId = requestAnimationFrame(render);
 
-    return () => cancelAnimationFrame(animId);
-  }, [type, severity, seed]);
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+      io.disconnect();
+    };
+  }, [type, Math.round(severity * 5), seed]);
 
   // Helper pseudorandom generator
   const breathe = (s: number, t: number) => {
@@ -144,6 +173,7 @@ export const AggressiveGlitchPattern: React.FC<AggressiveGlitchPatternProps> = (
 
   return (
     <div
+      ref={wrapRef}
       aria-hidden="true"
       className={`relative w-full my-4 overflow-hidden rounded border select-none pointer-events-none transition-all duration-200 ${
         isViolentShock ? 'animate-artifact-spasm border-red-500/80 shadow-lg shadow-red-950/60' : 'border-neutral-900/60 bg-black/80'
@@ -158,7 +188,7 @@ export const AggressiveGlitchPattern: React.FC<AggressiveGlitchPatternProps> = (
       />
       {/* Pattern Label */}
       <div className="absolute top-1 right-2 text-[9px] font-mono uppercase tracking-widest text-neutral-600">
-        STRATA INTERFERENCE // {(severity * 100).toFixed(0)}%
+        rot {(severity * 100).toFixed(0)}%
       </div>
     </div>
   );

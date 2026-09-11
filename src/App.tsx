@@ -48,26 +48,6 @@ export default function App() {
     setCurrentJumpscare(null);
   }, []);
 
-  // Handler for manual panic button
-  const handleManualPanic = useCallback(() => {
-    const jumpscareTypes: JumpscareType[] = [
-      'loud-crash-noise',
-      'corrupted-error-popup',
-      'distorted-fetched-image',
-      'abstract-signal-tear'
-    ];
-    const randomType = jumpscareTypes[Math.floor(Math.random() * jumpscareTypes.length)];
-
-    handleTriggerJumpscare({
-      id: `manual-panic-${Date.now()}`,
-      type: randomType,
-      intensity: 3,
-      timestamp: Date.now(),
-      durationMs: randomType === 'corrupted-error-popup' ? 2400 : 280,
-      imageSpecimen: randomType === 'distorted-fetched-image' ? getRandomInternetImage(depthState.depthMeters) : undefined
-    });
-  }, [depthState.depthMeters, handleTriggerJumpscare]);
-
   // Handler for individual aggressive shocks from items or user interactions
   const handleTriggerViolentShake = useCallback(
     (intensity: number) => {
@@ -146,7 +126,6 @@ export default function App() {
           <HudStatus
             depthState={depthState}
             isViolentShock={shake.isViolent}
-            onTriggerManualJumpscare={handleManualPanic}
           />
 
           {/* Background Eye & Vein Canvas */}

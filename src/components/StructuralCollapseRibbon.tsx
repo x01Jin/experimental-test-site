@@ -25,9 +25,9 @@ export const StructuralCollapseRibbon: React.FC<StructuralCollapseRibbonProps> =
   const angle = ((seed % 7) - 3.5) * 1.8; // e.g. -4.5deg to +4.5deg
 
   const textSamples = {
-    'hazard-tape': 'DO NOT CROSS // STRUCTURAL MEMORY COLLAPSE // SUB-STRATA VOID RUPTURE DETECTED',
-    'memory-rupture': 'SEGMENTATION FAULT AT COORD 0x00DEAD // SPATIAL MATRIX UNBOUND // BUFFER BLEED',
-    'biohazard-purge': 'CRITICAL PURGE IN PROGRESS // COGNITIVE CONTAINMENT FAULT // ABANDON TERMINAL'
+    'hazard-tape': "don't cross. floor soft here. back up",
+    'memory-rupture': '0x00dead. wall gave. it bled dust',
+    'biohazard-purge': 'leave it shut. it knows your step'
   };
 
   const rawText = textSamples[variant];
@@ -47,9 +47,9 @@ export const StructuralCollapseRibbon: React.FC<StructuralCollapseRibbonProps> =
     >
       <div className="whitespace-nowrap flex gap-8 animate-pulse">
         <span>⚠ {renderedText} ⚠</span>
-        <span>[{formatDepth(thresholdMeters)} DEPTH]</span>
+        <span>[{formatDepth(thresholdMeters)} down]</span>
         <span>⚠ {renderedText} ⚠</span>
-        <span>[CORRUPTION: {Math.floor(corruptionLevel)}%]</span>
+        <span>[rot {Math.floor(corruptionLevel)}%]</span>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { drawTrackingEye } from '../effects/nightmareFaces';
+import { drawRealisticEye } from '../effects/realEye';
 
 interface HorrorCanvasProps {
   corruptionLevel: number;
@@ -53,7 +53,7 @@ export const HorrorCanvas: React.FC<HorrorCanvasProps> = ({ corruptionLevel, dep
 
   // Update eyes in ref as corruption grows (no React state re-renders needed)
   useEffect(() => {
-    const targetEyeCount = Math.floor(1 + (corruptionLevel / 100) * 13);
+    const targetEyeCount = Math.min(6, Math.floor(1 + (corruptionLevel / 100) * 5));
     const newEyes: EyeInstance[] = [];
 
     for (let i = 0; i < targetEyeCount; i++) {
@@ -86,8 +86,13 @@ export const HorrorCanvas: React.FC<HorrorCanvasProps> = ({ corruptionLevel, dep
 
     const resize = () => {
       if (!containerRef.current || !canvas) return;
-      canvas.width = containerRef.current.clientWidth;
-      canvas.height = containerRef.current.clientHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const w = Math.floor(containerRef.current.clientWidth * dpr);
+      const h = Math.floor(containerRef.current.clientHeight * dpr);
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
     };
 
     const resizeObserver = new ResizeObserver(resize);
@@ -96,7 +101,18 @@ export const HorrorCanvas: React.FC<HorrorCanvasProps> = ({ corruptionLevel, dep
     }
     resize();
 
+    let lastVeinDraw = 0;
     const render = (time: number) => {
+      if (document.hidden) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+      // Cap to ~30fps for background ambience — plenty for dread, saves battery
+      if (time - lastVeinDraw < 33 && time > 100) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+      lastVeinDraw = time;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const w = canvas.width;
@@ -112,8 +128,8 @@ export const HorrorCanvas: React.FC<HorrorCanvasProps> = ({ corruptionLevel, dep
         ctx.lineWidth = 1.5;
 
         const pulse = Math.sin(time * 0.003) * 8;
-        // Top and bottom margin tendrils
-        for (let i = 0; i < 8; i++) {
+        // 6 tendrils max — was 8 full-height beziers every frame
+        for (let i = 0; i < 6; i++) {
           const startX = (w / 8) * i;
           ctx.beginPath();
           ctx.moveTo(startX, 0);
@@ -158,14 +174,16 @@ export const HorrorCanvas: React.FC<HorrorCanvasProps> = ({ corruptionLevel, dep
           ctx.arc(ex, ey, eye.radius, 0.2, Math.PI - 0.2);
           ctx.stroke();
         } else {
-          drawTrackingEye(
+          drawRealisticEye(
             ctx,
             ex,
             ey,
             eye.radius,
             mx,
             my,
-            currentCorruption / 100
+            currentCorruption / 100,
+            eye.id * 13 + 7,
+            0
           );
         }
       }

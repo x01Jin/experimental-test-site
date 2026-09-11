@@ -2,7 +2,7 @@
 
 ## Overview
 
-The layout system in **The Infinite Creep** rejects rigid grid uniformity in favor of an organic, escalating structural collapse. As the user descends deeper into the sub-strata, the visual presentation breaks down into an inconsistent, non-Euclidean disorder.
+The layout in **Experimental Test Site** falls apart as you go down. Cards drift, widths vary, borders go uneven.
 
 Rather than constraining items to identical rows or columns, the feed operates as an **unconstrained fractured stream** governed by procedural layout chaos profiles (`layoutChaos.ts`). Individual anomaly records drift laterally, vary wildly in width, collide into adjacent cards via negative vertical margins, exhibit asymmetric borders and erratic padding, and suffer jagged polygonal fractures.
 

@@ -107,10 +107,10 @@ export const JumpscareOverlay: React.FC<JumpscareOverlayProps> = ({
           <div className="w-full max-w-2xl h-24 bg-red-950/80 border-y-2 border-red-500/90 mix-blend-difference flex items-center justify-between px-6 backdrop-blur-xs animate-pulse">
             <div className="flex items-center space-x-3 text-red-300 font-mono text-xs sm:text-sm tracking-widest uppercase">
               <Cpu className="w-5 h-5 text-red-500 animate-spin" />
-              <span>[KERNEL THREAD EXHAUSTION :: 0x000000EF]</span>
+              <span>[thread gave out :: 0x000000EF]</span>
             </div>
             <div className="text-[11px] font-mono text-neutral-400">
-              PHYSICAL BUFFER REPEAT LOOP
+              loop. loop. loop.
             </div>
           </div>
           {/* Subtle brief chromatic tear bar */}
@@ -132,7 +132,7 @@ export const JumpscareOverlay: React.FC<JumpscareOverlayProps> = ({
           <div className="bg-red-900/90 text-white px-3 py-1.5 flex items-center justify-between border-b border-red-700 font-bold tracking-wider text-xs">
             <div className="flex items-center space-x-2">
               <AlertTriangle className="w-4 h-4 text-yellow-300 animate-pulse" />
-              <span>FATAL SUBSYSTEM FAULT</span>
+              <span>it broke</span>
             </div>
             <button
               id="close-corrupted-popup"
@@ -141,7 +141,7 @@ export const JumpscareOverlay: React.FC<JumpscareOverlayProps> = ({
                 onJumpscareEnd();
               }}
               className="pointer-events-auto text-neutral-300 hover:text-white p-0.5 rounded cursor-pointer"
-              title="Dismiss"
+              title="close"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -151,18 +151,18 @@ export const JumpscareOverlay: React.FC<JumpscareOverlayProps> = ({
           <div className="p-4 space-y-3 bg-neutral-950/90">
             <div className="text-red-400 font-black text-sm tracking-widest uppercase flex items-center space-x-2">
               <Terminal className="w-4 h-4 text-red-500 inline" />
-              <span>DRIVER_IRQL_NOT_LESS_OR_EQUAL</span>
+              <span>driver fell over</span>
             </div>
 
             <p className="text-neutral-300 text-[11px] leading-relaxed">
-              A critical thread exception occurred at address{' '}
-              <span className="text-yellow-400">0x00007FF8B4C02A11</span>. The audio/graphics driver cyclic DMA memory bus is corrupted.
+              thread died at{' '}
+              <span className="text-yellow-400">0x00007FF8B4C02A11</span>. sound card full of dust.
             </p>
 
             <div className="bg-black/90 p-2.5 rounded border border-red-900/60 font-mono text-[10px] text-red-400/90 leading-tight space-y-0.5">
-              <div>*** STOP: 0x000000D1 (0x00000000, 0x00000002, 0x00000000)</div>
-              <div>*** memory_bus_overflow.sys - Address FFFFF80002B48000</div>
-              <div className="text-neutral-500">DUMPING PHYSICAL RAM TO PAGEFILE... 74%</div>
+              <div>*** stop: 0x000000d1</div>
+              <div>*** memory_bus_overflow.sys</div>
+              <div className="text-neutral-500">dumping... 74%</div>
             </div>
 
             {/* Interactive Action Buttons (Does NOT prevent scrolling!) */}
@@ -176,7 +176,7 @@ export const JumpscareOverlay: React.FC<JumpscareOverlayProps> = ({
                 }}
                 className="pointer-events-auto px-3 py-1 bg-red-950 hover:bg-red-900 border border-red-700 text-red-200 text-[11px] font-bold tracking-wider cursor-pointer active:scale-95 transition-all"
               >
-                DUMP MEMORY
+                DUMP
               </button>
               <button
                 id="popup-btn-abort"
@@ -186,7 +186,7 @@ export const JumpscareOverlay: React.FC<JumpscareOverlayProps> = ({
                 }}
                 className="pointer-events-auto px-3 py-1 bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-neutral-300 text-[11px] font-bold tracking-wider cursor-pointer active:scale-95 transition-all"
               >
-                ABORT
+                leave
               </button>
             </div>
           </div>
@@ -215,7 +215,7 @@ export const JumpscareOverlay: React.FC<JumpscareOverlayProps> = ({
           </div>
 
           <div className="mt-3 font-mono text-xs text-red-400 uppercase tracking-widest font-black bg-black/90 border border-red-800 px-3 py-0.5">
-            [SPECIMEN CORRUPTION :: {activeSpecimen.sourceOrigin}]
+            [chewed up :: {activeSpecimen.sourceOrigin}]
           </div>
         </div>
       )}
@@ -227,7 +227,7 @@ export const JumpscareOverlay: React.FC<JumpscareOverlayProps> = ({
           <div className="w-full h-16 bg-neutral-900 border-y border-cyan-400 p-2 font-mono text-[9px] text-cyan-300 overflow-hidden leading-none tracking-tighter">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="truncate">
-                0x00FF{i}9A44 DEADBEEF 00101100 MEM_BUS_PARITY_FAULT :: STACK_TRACE_CORRUPTED :: SYSTEM_LOCK
+                0x00FF{i}9A44 deadbeef 00101100 fault :: trace gone :: hold
               </div>
             ))}
           </div>

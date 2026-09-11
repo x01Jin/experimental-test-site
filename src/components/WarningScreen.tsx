@@ -37,9 +37,9 @@ export const WarningScreen: React.FC<WarningScreenProps> = ({ onEnter }) => {
           <ShieldAlert className="w-8 h-8 text-red-500 animate-pulse shrink-0" />
           <div>
             <h2 className="text-xl sm:text-2xl font-black tracking-wider text-red-500 uppercase">
-              CRITICAL ADVISORY // SENSORY SYSTEM
+              Warning
             </h2>
-            <p className="text-xs text-neutral-400">CLASSIFICATION: COGNITIVE HAZARD LEVEL 5</p>
+            <p className="text-xs text-neutral-400">experimental test site — a place to test stuff</p>
           </div>
         </div>
 
@@ -48,20 +48,23 @@ export const WarningScreen: React.FC<WarningScreenProps> = ({ onEnter }) => {
           <div className="p-3 bg-red-950/20 border border-red-900/40 rounded flex items-start gap-2.5">
             <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
             <p className="text-xs text-amber-200/90">
-              <strong>PHOTOSENSITIVITY & AUDITORY WARNING:</strong> This experience contains aggressive
-              screen shaking, flashing strobe visuals, sudden loud procedural screams, and violent
-              jumpscares.
+              <strong>Content warning:</strong> this site contains loud sudden
+              sounds, flashing and strobing visuals, screen shaking, horror
+              imagery, readings, and texts. If you are sensitive to
+              flashing lights, loud noise content, turn back now.
             </p>
           </div>
 
           <p>
-            You are about to descend into an infinite, non-Euclidean digital abyss. The deeper you scroll,
-            the more corrupted, crowded, and hostile the interface becomes.
+            This is just an experimental website for testing things out —
+            scrolling feeds, video and audio playback, canvas effects, and
+            procedural layout. There is no story to follow and nothing here is
+            real.
           </p>
 
           <p className="text-neutral-400 text-xs italic">
-            Procedural audio (ambient drones, broken computer glitches, piercing static bursts, and screams)
-            will initialize upon entering.
+            Sound starts when you press the button below. You can mute at any
+            time from the bar at the top.
           </p>
         </div>
 
@@ -74,7 +77,7 @@ export const WarningScreen: React.FC<WarningScreenProps> = ({ onEnter }) => {
             className="w-full flex items-center justify-center gap-3 py-3.5 px-6 rounded bg-red-900 hover:bg-red-800 active:scale-[0.99] text-white font-bold tracking-widest uppercase text-sm border border-red-700 shadow-lg shadow-red-950 transition-all cursor-pointer"
           >
             <Skull className="w-5 h-5" />
-            <span>{loading ? 'CALIBRATING ABYSS...' : 'ENTER THE INFINITE ABYSS'}</span>
+            <span>{loading ? 'loading...' : 'i understand — enter'}</span>
             <Volume2 className="w-4 h-4 text-red-300" />
           </button>
         </div>

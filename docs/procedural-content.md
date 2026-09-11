@@ -2,7 +2,7 @@
 
 ## Overview
 
-**The Infinite Creep** implements a multi-layered procedural generation pipeline designed to provide vast content variety and eliminate repetition during prolonged exploration. The content system merges depth-tiered procedural generation, an expansive public image specimen archive, combinatorial forensic lore, and specialized interactive widgets.
+**Experimental Test Site** mixes depth-tiered generation, found photos, crew notes, numbers, gibberish, and link cards (Archive.org / Gutenberg / Commons).
 
 ---
 

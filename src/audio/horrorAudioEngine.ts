@@ -32,6 +32,7 @@ class HorrorAudioEngine {
   private isInitialized = false;
   private currentCorruption = 0; // 0 to 1
   private lastEventType: AmbientEventType | null = null;
+  private lastAggressiveAt = 0;
 
   public async initialize(): Promise<boolean> {
     const success = await audioCore.unlock();
@@ -131,6 +132,10 @@ class HorrorAudioEngine {
    */
   public triggerAggressiveEvent(intensity = 1): void {
     if (!this.isInitialized || audioCore.getIsMuted()) return;
+    // Throttle interaction stabs — hover storms were stacking nodes and tanking fps
+    const now = performance.now();
+    if (now - this.lastAggressiveAt < 350) return;
+    this.lastAggressiveAt = now;
 
     const roll = Math.random();
     if (roll < 0.4) {

@@ -48,7 +48,10 @@ export type HorrorItemType =
   | 'heartbeat-sensor'
   | 'cosmic-aberration'
   | 'autopsy-record'
-  | 'cctv-matrix';
+  | 'cctv-matrix'
+  | 'found-film'
+  | 'found-audio'
+  | 'link-card';
 
 export interface HorrorItem {
   id: string;

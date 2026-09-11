@@ -8,7 +8,15 @@
 export interface CorruptionOptions {
   severity: number; // 0.0 (subtle) to 1.0+ (abyssal chaos)
   timeSeed: number;
-  category?: 'portrait' | 'surveillance' | 'medical' | 'architecture' | 'specimen';
+  category?:
+  | 'portrait'
+  | 'surveillance'
+  | 'medical'
+  | 'architecture'
+  | 'specimen'
+  | 'liminal'
+  | 'cosmic'
+  | 'analog-glitch';
   enableDemonicFeatures?: boolean;
 }
 

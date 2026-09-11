@@ -7,7 +7,7 @@
  * vibrate and spasm violently during shocks and at deep corruption, without shaking the whole page.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo, useMemo } from 'react';
 import { HorrorItem } from '../types/horror';
 import { zalgoText } from '../utils/zalgo';
 import { horrorAudioEngine } from '../audio/horrorAudioEngine';
@@ -22,14 +22,16 @@ import {
   FileWarning,
   Activity,
   FileText,
-  Binary,
   Sparkles,
   Stethoscope,
-  Volume2
+  Volume2,
+  Clapperboard,
+  Link2
 } from 'lucide-react';
-import { drawTrackingEye } from '../effects/nightmareFaces';
+import { drawRealisticEye } from '../effects/realEye';
 import { formatDepth } from '../utils/depthScale';
 import { CorruptedImage } from './CorruptedImage';
+import { CorruptedVideo } from './CorruptedVideo';
 import { RedactedText } from './RedactedText';
 import { InteractiveAudioLog } from './InteractiveAudioLog';
 import { CursedRadioScanner } from './CursedRadioScanner';
@@ -43,7 +45,7 @@ interface HorrorTileProps {
   onTriggerAggressiveShock: (intensity: number) => void;
 }
 
-export const HorrorTile: React.FC<HorrorTileProps> = ({
+const HorrorTileInner: React.FC<HorrorTileProps> = ({
   item,
   globalCorruption,
   isViolentShock = false,
@@ -53,24 +55,36 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
   const [clicked, setClicked] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const eyeCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const articleRef = useRef<HTMLElement | null>(null);
 
   // Local corruption: global 0-100 scaled + small item variance (no double-count)
   const effectiveCorruption = Math.min(
     1.2,
     globalCorruption / 100 + Math.min(0.3, Math.max(0, item.glitchSeverity) * 0.2)
   );
+  const corruptionBucket = Math.round(effectiveCorruption * 5);
 
-  const corruptedTitle = zalgoText(item.title, effectiveCorruption * 0.35);
-  const corruptedContent = zalgoText(item.content, effectiveCorruption * 0.65);
+  const corruptedTitle = useMemo(
+    () => zalgoText(item.title, effectiveCorruption * 0.35),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [item.title, corruptionBucket]
+  );
+  const corruptedContent = useMemo(
+    () => zalgoText(item.content, effectiveCorruption * 0.65),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [item.content, corruptionBucket]
+  );
 
-  // Render eye in specimen card
+  // Render realistic eye in specimen card — viewport-gated, ~30fps
   useEffect(() => {
     if (item.type !== 'eye-specimen' || !eyeCanvasRef.current) return;
     const canvas = eyeCanvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animId: number;
+    let animId = 0;
+    let lastFrame = 0;
+    let visible = true;
     let targetX = 60;
     let targetY = 60;
 
@@ -80,29 +94,37 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
       targetY = e.clientY - rect.top;
     };
 
-    window.addEventListener('mousemove', handlePointer);
+    window.addEventListener('mousemove', handlePointer, { passive: true });
 
-    const renderEye = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawTrackingEye(
-        ctx,
-        60,
-        60,
-        44,
-        targetX,
-        targetY,
-        Math.min(1, effectiveCorruption * 1.2)
-      );
+    const io = new IntersectionObserver(
+      entries => {
+        visible = entries[0]?.isIntersecting ?? true;
+      },
+      { rootMargin: '200px' }
+    );
+    if (articleRef.current) io.observe(articleRef.current);
+
+    const blood = Math.min(1, effectiveCorruption * 1.2);
+    const renderEye = (time: number) => {
       animId = requestAnimationFrame(renderEye);
+      if (!visible || document.hidden) return;
+      if (time - lastFrame < 33) return;
+      lastFrame = time;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const blinkCycle = (time + 1200) % 4200;
+      const blink = blinkCycle < 140 ? 0.9 : 0;
+      drawRealisticEye(ctx, 60, 60, 44, targetX, targetY, blood, 11, blink);
     };
 
     animId = requestAnimationFrame(renderEye);
 
     return () => {
       window.removeEventListener('mousemove', handlePointer);
+      io.disconnect();
       cancelAnimationFrame(animId);
     };
-  }, [item.type, effectiveCorruption]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.type, corruptionBucket]);
 
   const handleTileHover = () => {
     if (!isHovered && effectiveCorruption > 0.25) {
@@ -187,19 +209,18 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
 
   return (
     <article
+      ref={articleRef}
       id={`horror-item-${item.id}`}
       style={transformStyle}
       onMouseEnter={handleTileHover}
       onMouseLeave={() => setIsHovered(false)}
-      className={`relative rounded border p-5 font-mono text-sm shadow-2xl transition-colors duration-200 ${alignmentClass} ${
-        shouldShake ? 'animate-element-shake' : ''
-      } ${
-        effectiveCorruption > 0.65
+      className={`relative rounded border p-5 font-mono text-sm shadow-2xl transition-colors duration-200 ${alignmentClass} ${shouldShake ? 'animate-element-shake' : ''
+        } ${effectiveCorruption > 0.65
           ? 'bg-red-950/25 border-red-700/80 shadow-red-950/50 text-red-200'
           : effectiveCorruption > 0.3
-          ? 'bg-neutral-900/90 border-neutral-700/70 text-neutral-200'
-          : 'bg-neutral-950/85 border-neutral-800/80 text-neutral-300'
-      } ${isHovered ? 'ring-1 ring-red-500/60' : ''}`}
+            ? 'bg-neutral-900/90 border-neutral-700/70 text-neutral-200'
+            : 'bg-neutral-950/85 border-neutral-800/80 text-neutral-300'
+        } ${isHovered ? 'ring-1 ring-red-500/60' : ''}`}
     >
       {/* Ghost Duplicate Silhouette */}
       {chaos?.ghostDuplicate && (
@@ -245,6 +266,9 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
           {item.type === 'cosmic-aberration' && <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />}
           {item.type === 'autopsy-record' && <Stethoscope className="w-4 h-4 text-rose-400" />}
           {item.type === 'cctv-matrix' && <Camera className="w-4 h-4 text-emerald-400 animate-pulse" />}
+          {item.type === 'found-film' && <Clapperboard className="w-4 h-4 text-red-400" />}
+          {item.type === 'found-audio' && <Volume2 className="w-4 h-4 text-amber-300" />}
+          {item.type === 'link-card' && <Link2 className="w-4 h-4 text-neutral-300" />}
 
           <h3 className="font-bold text-xs tracking-wider uppercase text-white/90">
             {corruptedTitle}
@@ -252,12 +276,12 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
         </div>
 
         <span className="text-[10px] tracking-widest text-neutral-500 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800">
-          THRESHOLD: {formatDepth(item.depthThreshold)}
+          found at {formatDepth(item.depthThreshold)}
         </span>
       </div>
 
       {/* Corrupted Internet Image Specimen (Creepy Artifact) - Hide on CCTV matrix since it has its own viewer */}
-      {item.imageSpecimen && item.type !== 'cctv-matrix' && (
+      {item.imageSpecimen && item.type !== 'cctv-matrix' && item.type !== 'found-film' && (
         <CorruptedImage
           specimen={item.imageSpecimen}
           severity={effectiveCorruption}
@@ -265,6 +289,31 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
           onInteraction={() => onTriggerAggressiveShock(0.8 + effectiveCorruption * 0.6)}
         />
       )}
+
+      {/* Found film — direct mp4 loop, rots with depth */}
+      {item.type === 'found-film' && item.extraMeta?.loopSrc ? (
+        <CorruptedVideo
+          src={String(item.extraMeta.loopSrc)}
+          pageUrl={String(item.extraMeta.pageUrl || item.extraMeta.sourceUrl || '')}
+          label={String(item.extraMeta.loopCredit ? item.title : item.title)}
+          credit={String(item.extraMeta.loopCredit || item.extraMeta.source || '')}
+          depthMeters={item.depthThreshold}
+          isViolentShock={shouldShake}
+        />
+      ) : null}
+
+      {/* Link cards + found audio — open out, never autoplay */}
+      {(item.type === 'link-card' || item.type === 'found-audio') && item.extraMeta?.linkUrl ? (
+        <a
+          href={String(item.extraMeta.linkUrl)}
+          target="_blank"
+          rel="noreferrer"
+          className="my-3 flex items-center justify-between gap-2 rounded border border-neutral-700 bg-neutral-900/70 px-3 py-2 font-mono text-[11px] text-neutral-300 hover:border-red-600 hover:text-white"
+        >
+          <span className="truncate">{String(item.extraMeta.linkLabel || item.title)}</span>
+          <span className="shrink-0 uppercase text-red-400">open →</span>
+        </a>
+      ) : null}
 
       {/* Narrative or Warning Content with Redaction Support */}
       <div className="text-xs sm:text-sm leading-relaxed text-neutral-300 mb-3 whitespace-pre-wrap break-words">
@@ -278,12 +327,23 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
         )}
       </div>
 
-      {/* Interactive Black Box Audio Component */}
-      {item.type === 'black-box-audio' && (
+      {/* Verbatim source — every word above is pasted, linked here */}
+      {item.extraMeta?.sourceUrl && (
+        <div className="mb-3 font-mono text-[10px] text-neutral-500">
+          <span className="italic">{String(item.extraMeta.source || 'source')}</span>
+          {' — '}
+          <a href={String(item.extraMeta.sourceUrl)} target="_blank" rel="noreferrer" className="text-red-400 underline">
+            read full →
+          </a>
+        </div>
+      )}
+      {(item.type === 'black-box-audio' || item.type === 'found-audio') && (
         <InteractiveAudioLog
           title={item.title}
           frequency={String(item.extraMeta?.audioFreq || '142.85 MHz')}
           speaker={String(item.extraMeta?.speaker || '')}
+          audioUrl={item.extraMeta?.audioUrl ? String(item.extraMeta.audioUrl) : undefined}
+          audioCredit={item.extraMeta?.audioCredit ? String(item.extraMeta.audioCredit) : undefined}
           isViolentShock={shouldShake}
         />
       )}
@@ -323,7 +383,7 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
             className="rounded-full shadow-inner border border-red-950/80"
           />
           <span className="text-[10px] text-red-400/80 mt-2 tracking-widest uppercase">
-            SPECIMEN TRACKING YOUR SCREEN POSITION
+            who are you
           </span>
         </div>
       )}
@@ -334,15 +394,13 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
           <button
             id={`btn-cursed-${item.id}`}
             onClick={handleCursedButtonClick}
-            className={`w-full py-2.5 px-4 rounded font-bold text-xs uppercase tracking-widest border transition-all active:scale-95 ${
-              shouldShake ? 'animate-artifact-spasm' : ''
-            } ${
-              clicked
+            className={`w-full py-2.5 px-4 rounded font-bold text-xs uppercase tracking-widest border transition-all active:scale-95 ${shouldShake ? 'animate-artifact-spasm' : ''
+              } ${clicked
                 ? 'bg-red-950 text-red-400 border-red-600 animate-pulse'
                 : 'bg-red-900/80 hover:bg-red-700 text-white border-red-600/80 shadow-lg shadow-red-950/50 cursor-pointer'
-            }`}
+              }`}
           >
-            {clicked ? 'PROTOCOL ENGAGED // IT CANNOT BE STOPPED' : String(item.extraMeta?.buttonLabel || 'ACTIVATE')}
+            {clicked ? 'stuck. it keeps going' : String(item.extraMeta?.buttonLabel || 'touch it')}
           </button>
         </div>
       )}
@@ -353,22 +411,20 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
           <button
             id={`survey-${item.id}-a`}
             onClick={() => handleOptionSelect(String(item.extraMeta?.optionA))}
-            className={`w-full text-left p-2.5 rounded border text-xs transition-all cursor-pointer ${
-              selectedOption === item.extraMeta?.optionA
+            className={`w-full text-left p-2.5 rounded border text-xs transition-all cursor-pointer ${selectedOption === item.extraMeta?.optionA
                 ? 'bg-red-950 border-red-600 text-red-300 font-bold'
                 : 'bg-neutral-900/60 hover:bg-neutral-800 border-neutral-700 text-neutral-300'
-            }`}
+              }`}
           >
             [A] {String(item.extraMeta?.optionA)}
           </button>
           <button
             id={`survey-${item.id}-b`}
             onClick={() => handleOptionSelect(String(item.extraMeta?.optionB))}
-            className={`w-full text-left p-2.5 rounded border text-xs transition-all cursor-pointer ${
-              selectedOption === item.extraMeta?.optionB
+            className={`w-full text-left p-2.5 rounded border text-xs transition-all cursor-pointer ${selectedOption === item.extraMeta?.optionB
                 ? 'bg-red-950 border-red-600 text-red-300 font-bold'
                 : 'bg-neutral-900/60 hover:bg-neutral-800 border-neutral-700 text-neutral-300'
-            }`}
+              }`}
           >
             [B] {String(item.extraMeta?.optionB)}
           </button>
@@ -380,6 +436,11 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
         <div className="mt-3 pt-2 border-t border-neutral-800/80 flex flex-wrap gap-2 text-[10px] text-neutral-400">
           {Object.entries(item.extraMeta).map(([k, v]) => {
             if (k === 'buttonLabel' || k === 'optionA' || k === 'optionB') return null;
+            if (k === 'linkUrl' || k === 'linkLabel' || k === 'linkKind') return null;
+            if (k === 'source' || k === 'sourceUrl' || k === 'depthOffset') return null;
+            if (k === 'loopSrc' || k === 'pageUrl' || k === 'loopCredit') return null;
+            if (k === 'audioUrl' || k === 'audioCredit') return null;
+            if (k === 'hasInteractiveWaveform' || k === 'isRadioScanner' || k === 'isHeartbeatSensor' || k === 'isCctvMatrix' || k === 'isRedacted' || k === 'redactionsCount' || k === 'disclosureRisk') return null;
             return (
               <span key={k} className="bg-neutral-900/80 px-1.5 py-0.5 rounded border border-neutral-800">
                 <strong className="text-neutral-300 uppercase">{k}:</strong> {String(v)}
@@ -388,6 +449,17 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
           })}
         </div>
       )}
+      <div className="mt-2 font-mono text-[9px] text-neutral-600">
+        sources: gutenberg (pd) / archive.org (pd) / commons (pd) / freesound (cc0/by)
+      </div>
     </article>
   );
 };
+
+export const HorrorTile = memo(HorrorTileInner, (prev, next) => {
+  return (
+    prev.item.id === next.item.id &&
+    Math.round(prev.globalCorruption / 8) === Math.round(next.globalCorruption / 8) &&
+    prev.isViolentShock === next.isViolentShock
+  );
+});

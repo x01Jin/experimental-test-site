@@ -23,12 +23,19 @@ export function useDepthTracker() {
 
   useEffect(() => {
     let ticking = false;
+    let lastEmit = 0;
+    let lastMeters = -1;
 
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          const currentY = window.scrollY || document.documentElement.scrollTop || 0;
           const now = performance.now();
+          // Throttle state emits to ~10/s — scroll math stays cheap, React stays at 60fps
+          if (now - lastEmit < 100) {
+            ticking = false;
+            return;
+          }
+          const currentY = window.scrollY || document.documentElement.scrollTop || 0;
           const dt = Math.max(now - lastScrollTime.current, 1);
           const dy = Math.abs(currentY - lastScrollY.current);
 
@@ -40,6 +47,12 @@ export function useDepthTracker() {
 
           // Depth calculation: single source of truth (see depthScale.ts)
           const meters = scrollYToMeters(currentY);
+          if (meters === lastMeters) {
+            ticking = false;
+            return;
+          }
+          lastMeters = meters;
+          lastEmit = now;
 
           // Corruption level 0-100, caps around 4000m
           const corruption = getCorruption(meters);
