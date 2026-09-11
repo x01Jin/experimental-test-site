@@ -1,99 +1,105 @@
 /**
- * Single-purpose component: Cursed electromagnetic radio frequency tuner.
- * Allows user to slide across VLF/HF frequency bands to discover phantom signals,
- * trigger synthesized heterodyne radio sweeps, and decode uncanny subterranean broadcasts.
+ * Radio dial tile. Stateless: the dial position and the sound itself live
+ * in the global background radio (globalRadio.ts) — every tile shows the
+ * same frequency, tuning any tile retunes the one shared station.
+ *
+ * Each mounted tile rolls its own phantom-signal map once: the frequencies
+ * that carry audio are randomized per instance, so one tile's live channel
+ * can be another tile's dead air. Signal texture comes from the
+ * numbers-station runs pool — no prose, just signal.
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Radio, Signal, VolumeX, AlertTriangle } from 'lucide-react';
 import { horrorAudioEngine } from '../audio/horrorAudioEngine';
 import { AUDIO_CLIPS } from '../utils/foundVerbatim';
+import { NUMBERS_RUNS, GIBBERISH_BLOCKS } from '../utils/foundHorror';
+import { registerProximity } from '../audio/proximityBus';
+import { useRadioState, tuneRadio } from '../audio/globalRadio';
+import { getCorruptionParams } from '../utils/corruptionCurve';
 
 interface CursedRadioScannerProps {
   initialFreq?: string;
+  depthMeters: number;
   isViolentShock?: boolean;
 }
 
-const PHANTOM_SIGNALS: Record<number, { title: string; transcript: string; clip: number }> = {
-  38: {
-    title: '38.0 khz — pipe mic',
-    transcript: '...drip... drip... then nothing... then dragging...',
-    clip: 6
-  },
-  114: {
-    title: '114.2 khz — numbers',
-    transcript: '4 - 9 - 0 - 2 ... repeat ... your street ... 4 - 9 - 0 ...',
-    clip: 0
-  },
-  240: {
-    title: '240.5 khz — lift shaft',
-    transcript: '[wet inhale] ...hello? ...cable humming... is anyone up?',
-    clip: 3
-  },
-  388: {
-    title: '388.0 khz — sump',
-    transcript: '[groan] ...pressure up... wall sweating... get out of B...',
-    clip: 9
-  }
-};
+interface PhantomSignal {
+  freq: number;
+  title: string;
+  texture: string;
+  clip: number;
+}
+
+function rollMap(): PhantomSignal[] {
+  const bands: Array<[number, number, string]> = [
+    [20, 120, 'low band'],
+    [120, 250, 'mid band'],
+    [250, 360, 'high band'],
+    [360, 450, 'top band'],
+  ];
+  return bands.map(([lo, hi, band]) => {
+    const freq = Math.round(lo + Math.random() * (hi - lo));
+    const clip = Math.floor(Math.random() * AUDIO_CLIPS.length);
+    const pool = Math.random() < 0.6 ? NUMBERS_RUNS : GIBBERISH_BLOCKS;
+    return {
+      freq,
+      title: `${freq.toFixed(1)} khz — ${band}`,
+      texture: pool[Math.floor(Math.random() * pool.length)],
+      clip,
+    };
+  });
+}
 
 export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
+  depthMeters,
   isViolentShock = false
 }) => {
-  const [frequency, setFrequency] = useState(114);
-  const [signalLocked, setSignalLocked] = useState(true);
-  const [nowPlaying, setNowPlaying] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const shared = useRadioState();
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const unregRef = useRef<(() => void) | null>(null);
+  const signals = useMemo(rollMap, []);
+  const params = getCorruptionParams(depthMeters);
 
-  const tuneTo = (clipIdx: number, label: string) => {
-    const audio = audioRef.current;
-    const clip = AUDIO_CLIPS[clipIdx % AUDIO_CLIPS.length];
-    if (!audio || !clip) return;
-    if (audio.src !== clip.url) {
-      audio.src = clip.url;
-      audio.load();
+  // presence sentinel so the background bed knows a dial is on screen
+  React.useEffect(() => {
+    const box = boxRef.current;
+    if (box && !unregRef.current) {
+      unregRef.current = registerProximity({ el: null, box, kind: 'radio', gate: { v: 1 } });
     }
-    const playFromRandom = () => {
-      if (Number.isFinite(audio.duration) && audio.duration > 15) {
-        try {
-          audio.currentTime = 5 + Math.random() * (audio.duration - 10);
-        } catch { /* noop */ }
-      }
-      audio.volume = 0.5;
-      audio.play().catch(() => { /* locked until gesture */ });
-      setNowPlaying(label);
+    return () => {
+      unregRef.current?.();
+      unregRef.current = null;
     };
-    if (audio.readyState >= 1) playFromRandom();
-    else audio.onloadedmetadata = playFromRandom;
-  };
+  }, []);
+
+  const matched = signals.find(s => Math.abs(s.freq - shared.freq) <= 6);
+  const signalLocked = !!matched;
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
-    setFrequency(val);
-
-    // Audio frequency sweep feedback
     horrorAudioEngine.playRadioScannerDial(0.85);
-
-    // Check if near any phantom signal within +/- 6 kHz
-    const matched = Object.entries(PHANTOM_SIGNALS).find(
-      ([freq]) => Math.abs(parseInt(freq, 10) - val) <= 6
-    );
-    setSignalLocked(!!matched);
-    if (matched) tuneTo(matched[1].clip, matched[1].title);
-    else {
-      audioRef.current?.pause();
-      setNowPlaying(null);
-    }
+    const hit = signals.find(s => Math.abs(s.freq - val) <= 6);
+    tuneRadio(val, hit ? hit.clip : null);
   };
 
-  // Find active broadcast if matched
-  const activeBroadcast = Object.entries(PHANTOM_SIGNALS).find(
-    ([freq]) => Math.abs(parseInt(freq, 10) - frequency) <= 6
-  );
+  React.useEffect(() => {
+    const box = boxRef.current;
+    if (box && !unregRef.current) {
+      unregRef.current = registerProximity({ el: null, box, kind: 'radio', gate: { v: 1 } });
+    }
+    return () => {
+      unregRef.current?.();
+      unregRef.current = null;
+    };
+  }, []);
+
+  const onAirClip = shared.liveClip >= 0 ? AUDIO_CLIPS[shared.liveClip % AUDIO_CLIPS.length] : null;
 
   return (
     <div
       id="cursed-radio-scanner-card"
+      ref={boxRef}
       className={`my-3 p-3 rounded border border-amber-900/60 bg-neutral-950 font-mono text-xs ${isViolentShock ? 'animate-artifact-spasm' : ''
         }`}
     >
@@ -120,7 +126,7 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
         <div>
           <span className="text-[10px] text-neutral-500 block">tuned</span>
           <span className="text-sm font-bold text-amber-300 tracking-wider">
-            {frequency.toFixed(1)} kHz
+            {shared.freq.toFixed(1)} kHz
           </span>
         </div>
         <div className="text-right">
@@ -135,7 +141,7 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
           type="range"
           min="20"
           max="450"
-          value={frequency}
+          value={Math.round(shared.freq)}
           onChange={handleSliderChange}
           className="w-full accent-amber-500 cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
         />
@@ -147,19 +153,19 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
         </div>
       </div>
 
-      {/* Intercepted Signal Transcript Display */}
-      {activeBroadcast ? (
+      {/* Intercepted Signal Display */}
+      {matched ? (
         <div className="p-2 rounded bg-amber-950/30 border border-amber-800/60 text-amber-200 text-[11px] animate-pulse">
           <div className="flex items-center gap-1 text-amber-400 font-bold text-[10px] mb-1">
             <AlertTriangle className="w-3 h-3" />
-            <span>{activeBroadcast[1].title}</span>
+            <span>{matched.title}</span>
           </div>
           <p className="leading-snug italic font-mono text-[10px]">
-            &quot;{activeBroadcast[1].transcript}&quot;
+            &quot;{matched.texture}&quot;
           </p>
-          {nowPlaying && (
+          {onAirClip && (
             <p className="mt-1 font-mono text-[9px] not-italic text-amber-400/70">
-              playing: {AUDIO_CLIPS[activeBroadcast[1].clip % AUDIO_CLIPS.length]?.label} — LibriVox
+              playing: {onAirClip.label} — LibriVox · rot {Math.round(params.c * 100)}%
             </p>
           )}
         </div>
@@ -168,7 +174,6 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
           [nothing.]
         </div>
       )}
-      <audio ref={audioRef} preload="none" />
     </div>
   );
 };

@@ -1,12 +1,20 @@
 /**
- * Recovered tape player. Plays a real LibriVox file from a random spot —
- * never synth-only. Waveform is driven by the live AnalyserNode when the
- * browser allows it, fake static line otherwise.
- * Media control through refs per React docs (react.dev forwardRef/ref patterns).
+ * Recovered tape player. Plays a real LibriVox file from a random spot.
+ * Sound runs through the depth-corruption voice (drive, bitcrush, muffle,
+ * dropouts, wow/flutter, skip-cuts, hiss) — shallow is clean, deep is chewed.
+ *
+ * Two past bugs fixed here: the AudioContext is created/resumed inside the
+ * click gesture (never suspended-silenced), and the element opts into CORS
+ * up front so the Web Audio graph gets real samples. If a file refuses CORS,
+ * we reload it plain — audible and clean beats silent and corrupted.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Radio, Volume2 } from 'lucide-react';
+import { attachCorruption, ensureAudioContext, CorruptVoice } from '../audio/corruptPlayback';
+import { registerProximity } from '../audio/proximityBus';
+import { getCorruptionParams } from '../utils/corruptionCurve';
+import { randomAudioWindow } from '../utils/foundVerbatim';
 
 interface InteractiveAudioLogProps {
   title: string;
@@ -15,6 +23,7 @@ interface InteractiveAudioLogProps {
   /** direct mp3 — playback starts at a random offset */
   audioUrl?: string;
   audioCredit?: string;
+  depthMeters: number;
   isViolentShock?: boolean;
 }
 
@@ -23,29 +32,98 @@ export const InteractiveAudioLog: React.FC<InteractiveAudioLogProps> = ({
   speaker,
   audioUrl,
   audioCredit,
+  depthMeters,
   isViolentShock = false
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audible, setAudible] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const analyserRef = useRef<{ analyser: AnalyserNode; data: Uint8Array } | null>(null);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const voiceRef = useRef<CorruptVoice | null>(null);
+  const waveRef = useRef<{ analyser: AnalyserNode; data: Uint8Array } | null>(null);
+  const plainFallbackRef = useRef(false);
+  const segRef = useRef<{ start: number; end: number }>({ start: 0, end: 60 });
+  const unregisterRef = useRef<(() => void) | null>(null);
   const animRef = useRef<number | null>(null);
+  const params = getCorruptionParams(depthMeters);
+
+  const hookVoice = () => {
+    const audio = audioRef.current;
+    if (!audio || voiceRef.current || plainFallbackRef.current) return;
+    ensureAudioContext();
+    const voice = attachCorruption(audio, { ...params.audio });
+    if (voice?.analyser) {
+      voiceRef.current = voice;
+      waveRef.current = {
+        analyser: voice.analyser,
+        data: new Uint8Array(voice.analyser.frequencyBinCount),
+      };
+    }
+  };
 
   const togglePlayback = () => {
     const audio = audioRef.current;
+    const box = boxRef.current;
     if (!audio) return;
     if (audio.paused) {
-      // random spot, never the very beginning
-      if (audio.currentTime < 1 && Number.isFinite(audio.duration) && audio.duration > 15) {
-        audio.currentTime = 5 + Math.random() * (audio.duration - 10);
+      hookVoice();
+      // join proximity: heard only when scrolled near, like the film loops
+      if (box && !unregisterRef.current) {
+        unregisterRef.current = registerProximity({
+          el: audio,
+          box,
+          kind: 'tape',
+          gate: { v: 1 },
+          onAudible: a => setAudible(a),
+        });
       }
       audio.play().catch(() => setIsPlaying(false));
     } else {
       audio.pause();
+      unregisterRef.current?.();
+      unregisterRef.current = null;
+      setAudible(false);
     }
   };
 
-  // Render waveform: live analyser data when available, static line otherwise
+  // random 1–60s loop from a random point — never the beginning
+  const handleMetadata = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const { start, len } = randomAudioWindow(audio.duration);
+    segRef.current = { start, end: start + len };
+    try {
+      audio.currentTime = start;
+    } catch { /* timeupdate will clamp */ }
+  };
+
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.currentTime >= segRef.current.end || audio.currentTime < segRef.current.start - 1) {
+      try {
+        audio.currentTime = segRef.current.start;
+      } catch { /* noop */ }
+    }
+  };
+
+  // If the file refuses CORS, drop the attribute and play it plain.
+  const handleError = () => {
+    const audio = audioRef.current;
+    if (!audio || plainFallbackRef.current) return;
+    plainFallbackRef.current = true;
+    voiceRef.current?.destroy();
+    voiceRef.current = null;
+    waveRef.current = null;
+    try {
+      audio.removeAttribute('crossorigin');
+      audio.load();
+      audio.play().catch(() => setIsPlaying(false));
+    } catch { /* stays quiet — user can retry */ }
+  };
+
+  // Render waveform: live post-corruption analyser data when available
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -76,7 +154,7 @@ export const InteractiveAudioLog: React.FC<InteractiveAudioLogProps> = ({
       ctx.strokeStyle = isPlaying ? '#22c55e' : '#4b5563';
       ctx.lineWidth = isPlaying ? 2 : 1;
 
-      const live = analyserRef.current;
+      const live = waveRef.current;
       const bars = 64;
       const sliceWidth = w / bars;
       for (let i = 0; i < bars; i++) {
@@ -105,25 +183,22 @@ export const InteractiveAudioLog: React.FC<InteractiveAudioLogProps> = ({
     };
   }, [isPlaying]);
 
-  // Hook the analyser once the element can play (CORS-clean Archive.org files)
-  const hookAnalyser = () => {
-    const audio = audioRef.current;
-    if (!audio || analyserRef.current) return;
-    try {
-      const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new AC();
-      const srcNode = ctx.createMediaElementSource(audio);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      srcNode.connect(analyser);
-      analyser.connect(ctx.destination);
-      analyserRef.current = { analyser, data: new Uint8Array(analyser.frequencyBinCount) };
-    } catch { /* cross-origin or locked — fake wave stays */ }
-  };
+  // Tear down on unmount — voice first, then proximity
+  useEffect(() => {
+    return () => {
+      unregisterRef.current?.();
+      unregisterRef.current = null;
+      voiceRef.current?.destroy();
+      voiceRef.current = null;
+    };
+  }, []);
+
+  const rot = Math.round(params.c * 100);
 
   return (
     <div
       id="interactive-audio-log-card"
+      ref={boxRef}
       className={`my-3 rounded border border-emerald-950/80 bg-neutral-950 p-3 font-mono text-xs ${
         isViolentShock ? 'animate-artifact-spasm' : ''
       }`}
@@ -135,8 +210,8 @@ export const InteractiveAudioLog: React.FC<InteractiveAudioLogProps> = ({
         </div>
         {speaker && <span className="text-neutral-400">SRC: {speaker}</span>}
         <div className="flex items-center gap-1 text-[9px] uppercase tracking-wider">
-          <span className={`h-2 w-2 rounded-full ${isPlaying ? 'animate-ping bg-emerald-500' : 'bg-neutral-600'}`} />
-          <span>{isPlaying ? 'live' : 'quiet'}</span>
+          <span className={`h-2 w-2 rounded-full ${audible ? 'animate-ping bg-emerald-500' : 'bg-neutral-600'}`} />
+          <span>{audible ? 'live' : isPlaying ? 'far' : 'quiet'}</span>
         </div>
       </div>
 
@@ -148,10 +223,16 @@ export const InteractiveAudioLog: React.FC<InteractiveAudioLogProps> = ({
         <audio
           ref={audioRef}
           src={audioUrl}
-          preload="metadata"
+          crossOrigin="anonymous"
+          preload="auto"
           onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onCanPlay={hookAnalyser}
+          onPause={() => {
+            setIsPlaying(false);
+            setAudible(false);
+          }}
+          onLoadedMetadata={handleMetadata}
+          onTimeUpdate={handleTimeUpdate}
+          onError={handleError}
         />
       )}
 
@@ -172,7 +253,7 @@ export const InteractiveAudioLog: React.FC<InteractiveAudioLogProps> = ({
 
         <div className="flex items-center gap-1 rounded border border-neutral-800 bg-neutral-900 px-2 py-1.5 text-[10px] text-neutral-400">
           <Volume2 className="h-3.5 w-3.5 text-neutral-500" />
-          <span>VLF-8</span>
+          <span>rot {rot}%</span>
         </div>
       </div>
       {audioCredit && <div className="mt-1 font-mono text-[9px] italic text-neutral-600">{audioCredit}</div>}

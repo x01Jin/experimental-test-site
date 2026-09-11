@@ -4,6 +4,38 @@
  * so everything rots together as you go down.
  */
 
+export interface AudioCorruption {
+  /** waveshaper drive 0-100 (MDN makeDistortionCurve k) */
+  drive: number;
+  /** quantize steps for cheap bitcrush (0 = off) */
+  crushSteps: number;
+  /** lowpass cutoff Hz — muffle as you sink */
+  lowpassHz: number;
+  /** dropout scheduler: events per second at full gate */
+  dropoutRate: number;
+  /** longest dropout ms */
+  dropoutMaxMs: number;
+  /** wow/flutter playbackRate jitter depth */
+  wowDepth: number;
+  /** hiss bed gain 0-1 */
+  hissGain: number;
+  /** skip-cut jumps per minute */
+  skipRate: number;
+}
+
+export interface VideoCorruption {
+  /** SVG rgb-split channel offset px (0 = filter off) */
+  rgbDx: number;
+  /** tear-bar flash events per second */
+  tearRate: number;
+  /** skip-cut jumps per minute */
+  skipRate: number;
+  /** frame-freeze chance per second 0-1 */
+  freezeChance: number;
+  /** longest freeze ms */
+  freezeMaxMs: number;
+}
+
 export interface CorruptionParams {
   /** 0-1 */
   c: number;
@@ -23,6 +55,10 @@ export interface CorruptionParams {
   audioCrush: number;
   /** video playback wobble */
   playbackWobble: number;
+  /** waveshaper/filter/dropout voice for tape + radio */
+  audio: AudioCorruption;
+  /** rgb-split/tear/skip/freeze voice for clips */
+  videoFx: VideoCorruption;
 }
 
 export function getCorruptionParams(depthMeters: number): CorruptionParams {
@@ -44,6 +80,23 @@ export function getCorruptionParams(depthMeters: number): CorruptionParams {
     cssFilter: `contrast(${contrast}%) saturate(${saturate}%) hue-rotate(${hue}deg) brightness(${brightness}%)`,
     audioCrush: c,
     playbackWobble: c * 0.35,
+    audio: {
+      drive: c * 120,
+      crushSteps: c < 0.35 ? 0 : c < 0.6 ? 32 : c < 0.85 ? 12 : 6,
+      lowpassHz: 18000 - c * 17400,
+      dropoutRate: c * 1.6,
+      dropoutMaxMs: 60 + c * 340,
+      wowDepth: c * 0.08,
+      hissGain: c * 0.05,
+      skipRate: c * 6,
+    },
+    videoFx: {
+      rgbDx: bucket < 2 ? 0 : bucket === 2 ? 2 : bucket === 3 ? 4 : 7,
+      tearRate: c * 1.2,
+      skipRate: c * 8,
+      freezeChance: c < 0.5 ? 0 : (c - 0.5) * 0.8,
+      freezeMaxMs: 120 + c * 280,
+    },
   };
 }
 

@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import { Skull, AlertTriangle, Volume2, ShieldAlert } from 'lucide-react';
 import { horrorAudioEngine } from '../audio/horrorAudioEngine';
+import { startGlobalRadio } from '../audio/globalRadio';
 
 interface WarningScreenProps {
   onEnter: () => void;
@@ -20,6 +21,9 @@ export const WarningScreen: React.FC<WarningScreenProps> = ({ onEnter }) => {
     await horrorAudioEngine.initialize();
     // Play an introductory low click and drone
     horrorAudioEngine.triggerAggressiveEvent(0.8);
+    // Start the background station inside this gesture (autoplay-legal),
+    // tuned to a live channel as a quiet bed under everything
+    startGlobalRadio();
     onEnter();
   };
 
@@ -56,10 +60,7 @@ export const WarningScreen: React.FC<WarningScreenProps> = ({ onEnter }) => {
           </div>
 
           <p>
-            This is just an experimental website for testing things out —
-            scrolling feeds, video and audio playback, canvas effects, and
-            procedural layout. There is no story to follow and nothing here is
-            real.
+            This is just an experimental website for testing things out, but atleast read the warning just to be clear. If you are sensitive to flashing lights, loud noise content, or horror imagery, please turn back now. You have been warned.
           </p>
 
           <p className="text-neutral-400 text-xs italic">

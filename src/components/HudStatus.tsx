@@ -10,6 +10,8 @@ import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, AlertTriangle, Skull, Activity } from 'lucide-react';
 import { DepthState } from '../types/horror';
 import { horrorAudioEngine } from '../audio/horrorAudioEngine';
+import { setMasterVolume, nudgeProximity } from '../audio/proximityBus';
+import { setRadioMuted } from '../audio/globalRadio';
 import { formatDepth, getBPM } from '../utils/depthScale';
 
 interface HudStatusProps {
@@ -24,7 +26,6 @@ export const HudStatus: React.FC<HudStatusProps> = ({
   const [isMuted, setIsMuted] = useState(horrorAudioEngine.getIsMuted());
   const [volume, setVolume] = useState(horrorAudioEngine.getVolume());
   const [heartRate, setHeartRate] = useState(74);
-
   // Heart rate accelerates dynamically with depth and corruption (canonical curve)
   useEffect(() => {
     const baseBpm = getBPM(depthState.corruptionLevel);
@@ -36,18 +37,30 @@ export const HudStatus: React.FC<HudStatusProps> = ({
     return () => clearInterval(interval);
   }, [depthState.corruptionLevel]);
 
+  // Master volume starts from the engine default so tapes, clips,
+  // background radio, and synth agree from the first frame
+  useEffect(() => {
+    setMasterVolume(horrorAudioEngine.getVolume());
+  }, []);
+
   const handleMuteToggle = () => {
     const muted = horrorAudioEngine.toggleMute();
     setIsMuted(muted);
+    // one mute silences everything: synth engine + background bed + tapes/clips
+    setRadioMuted(muted);
+    nudgeProximity();
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     setVolume(val);
     horrorAudioEngine.setVolume(val);
+    setMasterVolume(val);
+    nudgeProximity();
     if (isMuted && val > 0) {
       horrorAudioEngine.toggleMute();
       setIsMuted(false);
+      setRadioMuted(false);
     }
   };
 

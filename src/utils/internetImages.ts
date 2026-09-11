@@ -17,58 +17,59 @@ export interface InternetImageSpecimen {
 
 export const INTERNET_HORROR_IMAGES: InternetImageSpecimen[] = [
   // =================== PORTRAITS & BIO-ARCHIVES ===================
+  // public-domain horrors via Wikimedia Commons — all HEAD-verified 200
   {
     id: 'specimen-portrait-1',
-    url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/5/5b/Francisco_de_Goya_y_Lucientes_-_Saturn_Devouring_One_of_his_Children_-_WGA10109.jpg',
     fallbackSeed: 101,
     category: 'portrait',
-    title: 'SUBJECT 09-B // DAGUERREOTYPE',
-    caption: 'Archived portrait recovered from basement vault. Biometric facial markers have distorted over time.',
-    sourceOrigin: 'CIVIL ARCHIVES VOL. 14'
+    title: 'PLATE 09-B // THE DEVOURER',
+    caption: 'Goya, Black Paintings period. It ate its own and kept chewing.',
+    sourceOrigin: 'PRADO TRANSFER, REJECTED'
   },
   {
     id: 'specimen-portrait-2',
-    url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/5/57/Theodor_Kittelsen_-_Pesta_i_trappen%2C_1896_%28Pesta_on_the_Stairs%29.jpg',
     fallbackSeed: 102,
     category: 'portrait',
-    title: 'PATIENT #441 // ADMISSION RECORD',
-    caption: 'Subject reported persistent auditory hum at 38 Hz. Pupil dilation remained unreactive to ambient light.',
+    title: 'PATIENT #441 // STAIRWELL SIGHTING',
+    caption: 'Kittelsen, 1896. The plague hag on the stairs. She is coming up.',
     sourceOrigin: 'VALLEY SANATORIUM 1974'
   },
   {
     id: 'specimen-portrait-3',
-    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/e/e2/Theodor_Kittelsen_-_Pesta_Kommer%2C_1894-95_%28Pesta%27s_Coming%29.jpg',
     fallbackSeed: 103,
     category: 'portrait',
-    title: 'STAFF LOG: DR. ARIS THORNE',
-    caption: 'Senior researcher logged last entry prior to perimeter breach. Eyes in photograph appear to watch observer.',
+    title: 'STAFF LOG: NIGHT WATCH',
+    caption: 'Kittelsen, 1894. Pesta is coming. Bar the door, it will not matter.',
     sourceOrigin: 'PERSONNEL FILE 8820'
   },
   {
     id: 'specimen-portrait-4',
-    url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/e/e4/Theodor_Kittelsen_-_Skogtroll%2C_1906_%28Forest_Troll%29.jpg',
     fallbackSeed: 104,
     category: 'portrait',
-    title: 'DOSSIER #77 // VEILED APPARITION',
-    caption: 'Emulsion plate taken during 1912 séances in Sub-Level 3. Skin tone registers negative temperature.',
+    title: 'DOSSIER #77 // WOODLAND SUBJECT',
+    caption: 'Kittelsen, 1906. Photographed the treeline. Something photographed back.',
     sourceOrigin: 'PARANORMAL CENSUS 1912'
   },
   {
     id: 'specimen-portrait-5',
-    url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80',
+    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Theodor_Kittelsen_-_Waldtroll_-_1906.jpeg/960px-Theodor_Kittelsen_-_Waldtroll_-_1906.jpeg',
     fallbackSeed: 105,
     category: 'portrait',
-    title: 'IDENTIFICATION FILE // UNCLAIMED CADAVER',
-    caption: 'Found behind plaster partition in boiler chamber. Jaw muscles locked in post-mortem grimace.',
+    title: 'IDENTIFICATION FILE // UNCLAIMED',
+    caption: 'Kittelsen, 1906. Found behind the plaster partition. It was facing the wall.',
     sourceOrigin: 'COUNTY CORONER REGISTER'
   },
   {
     id: 'specimen-portrait-6',
-    url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/f/fd/Thomas_Bartholin%27s_beak_doctor.jpg',
     fallbackSeed: 106,
     category: 'portrait',
-    title: 'NURSE MARGARET ELM // SHIFT REPORT',
-    caption: 'Entered Ward 9 at 02:15. When discovered, subject stated she could hear teeth grinding behind every brick.',
+    title: 'DR. BEAK // SHIFT REPORT',
+    caption: 'Entered Ward 9 at 02:15. The mask never came off. Nothing underneath needed it.',
     sourceOrigin: 'PSYCHIATRIC ADMISSIONS 1968'
   },
 
@@ -114,51 +115,52 @@ export const INTERNET_HORROR_IMAGES: InternetImageSpecimen[] = [
   },
   {
     id: 'specimen-surveillance-5',
-    url: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32f?auto=format&fit=crop&w=600&q=80',
+    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/63/Paris_catacombes.jpg/960px-Paris_catacombes.jpg',
     fallbackSeed: 111,
     category: 'surveillance',
     title: 'QUARANTINE AIRLOCK // SENSOR ARRAY',
-    caption: 'Pressure breach indicators flashed green even though atmospheric pressure exceeded 4.2 bar.',
+    caption: 'Pressure breach indicators flashed green. The walls are stacked skulls. They were always skulls.',
     sourceOrigin: 'SECTOR GATE TELEMETRY',
     filterMode: 'thermal'
   },
 
   // =================== MEDICAL & RADIOLOGY ===================
+  // Holbein Dance of Death + memento mori, public domain via Commons
   {
     id: 'specimen-medical-1',
-    url: 'https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&w=600&q=80',
+    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/09/Holbein_Danse_Macabre_1.jpg/960px-Holbein_Danse_Macabre_1.jpg',
     fallbackSeed: 112,
     category: 'medical',
     title: 'CRANIAL SCAN 11-DELTA',
-    caption: 'Transverse radiograph showing anomalous calcification in retro-orbital nerve pathways.',
+    caption: 'Holbein, 1538. Death takes the pope first. Rank is no insulation.',
     sourceOrigin: 'NEUROLOGY LAB ARCHIVE',
     filterMode: 'xray'
   },
   {
     id: 'specimen-medical-2',
-    url: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=600&q=80',
+    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e5/Holbein_Danse_Macabre_2.jpg/960px-Holbein_Danse_Macabre_2.jpg',
     fallbackSeed: 113,
     category: 'medical',
     title: 'HISTOLOGY SECTION // CELL COLONY 9',
-    caption: 'Cultured cellular tissue exhibiting continuous cell division in complete absence of oxygen.',
+    caption: 'Holbein, 1538. Death takes the emperor mid-decree. The decree continues without him.',
     sourceOrigin: 'PATHOLOGY DEPT 02'
   },
   {
     id: 'specimen-medical-3',
-    url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=600&q=80',
+    url: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/Holbein_Danse_Macabre_3.jpg/960px-Holbein_Danse_Macabre_3.jpg',
     fallbackSeed: 114,
     category: 'medical',
     title: 'SURGICAL THEATER 4 // EMERGENCY CESSATION',
-    caption: 'Operation terminated abruptly when patient vocal cords continued chanting while under complete general anesthesia.',
+    caption: 'Holbein, 1538. The operation terminated. The patient kept dancing.',
     sourceOrigin: 'CLINICAL INCIDENT LOG 1983'
   },
   {
     id: 'specimen-medical-4',
-    url: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80',
+    url: 'https://upload.wikimedia.org/wikipedia/commons/4/43/Unknown_artist_-_Memento_mori_-_GLAHA-45017_-_Hunterian_Museum_and_Art_Gallery.jpg',
     fallbackSeed: 115,
     category: 'medical',
     title: 'BIO-VIAL #882 // AMNIOTIC SEDIMENT',
-    caption: 'Liquid inside vial has developed its own pulse at precisely 44 beats per minute.',
+    caption: 'Remember you must die. The vial remembers for you, at 44 beats per minute.',
     sourceOrigin: 'BIO-CONTAINMENT VAULT'
   },
 
@@ -210,15 +212,6 @@ export const INTERNET_HORROR_IMAGES: InternetImageSpecimen[] = [
   },
 
   // =================== SPECIMENS & ORGANIC ENTITIES ===================
-  {
-    id: 'specimen-specimen-1',
-    url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=600&q=80',
-    fallbackSeed: 121,
-    category: 'specimen',
-    title: 'ORGANIC TISSUE SAMPLE 8',
-    caption: 'Microscopic slide of unidentified fibrous cellular structure proliferating in the ventilation ducts.',
-    sourceOrigin: 'PATHOLOGY UNIT 3'
-  },
   {
     id: 'specimen-specimen-2',
     url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=600&q=80',
@@ -325,8 +318,11 @@ export const INTERNET_HORROR_IMAGES: InternetImageSpecimen[] = [
 ];
 
 /**
- * Returns a random internet image specimen from the curated repository
+ * Returns a random internet image specimen from the curated repository.
+ * Avoids the most recently served ids so long scrolls stop repeating.
  */
+const recentIds: string[] = [];
+
 export function getRandomInternetImage(seedIndex?: number, category?: InternetImageSpecimen['category']): InternetImageSpecimen {
   let pool = INTERNET_HORROR_IMAGES;
   if (category) {
@@ -338,8 +334,15 @@ export function getRandomInternetImage(seedIndex?: number, category?: InternetIm
     const idx = Math.abs(Math.floor(seedIndex)) % pool.length;
     return pool[idx];
   }
-  const randomIdx = Math.floor(Math.random() * pool.length);
-  return pool[randomIdx];
+  let pick = pool[Math.floor(Math.random() * pool.length)];
+  if (pool.length > 8) {
+    for (let i = 0; i < 4 && recentIds.includes(pick.id); i++) {
+      pick = pool[Math.floor(Math.random() * pool.length)];
+    }
+  }
+  recentIds.push(pick.id);
+  if (recentIds.length > 10) recentIds.shift();
+  return pick;
 }
 
 /**

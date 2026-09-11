@@ -57,6 +57,7 @@ export function generateProceduralHorrorItem(
       title = loop.label;
       content = excerpt.text;
       extraMeta.loopSrc = loop.src;
+      if (loop.fallbackSrc) extraMeta.loopFallback = loop.fallbackSrc;
       extraMeta.pageUrl = loop.pageUrl;
       extraMeta.loopCredit = loop.credit;
       break;

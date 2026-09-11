@@ -129,7 +129,10 @@ export interface AudioClip {
   credit: string;
 }
 
-const POE = 'https://www.archive.org/download/12_creepytales_1206_librivox';
+/* Direct storage-node URLs (ia*.us.archive.org send Access-Control-Allow-Origin: *,
+ * so the Web Audio corruption graph gets real samples). Hosts + dirs taken from
+ * each item's metadata API workable_servers — never the www frontend. */
+const POE = 'https://ia801600.us.archive.org/26/items/12_creepytales_1206_librivox';
 
 export const AUDIO_CLIPS: AudioClip[] = [
   { label: 'The Tell-Tale Heart — Poe', url: `${POE}/creepytalesbypoe_01_poe_64kb.mp3`, credit: 'read by Ann Boulais, LibriVox' },
@@ -147,30 +150,86 @@ export const AUDIO_CLIPS: AudioClip[] = [
 
 export interface VideoLoop {
   label: string;
-  /** direct mp4 — the player loops a random ≤12s segment of this file */
+  /** direct mp4 on the item's workable storage node — the player loops a random ≤12s segment */
   src: string;
+  /** alternate encoding / mirror tried if src errors */
+  fallbackSrc?: string;
   pageUrl: string;
   credit: string;
 }
 
+/* Every src HEAD-verified 200 video/mp4 with byte ranges; hosts are each
+ * item's metadata-API workable server, so we never ride a flaky mirror. */
 export const VIDEO_LOOPS: VideoLoop[] = [
   {
     label: 'nosferatu (1922)',
-    src: 'https://archive.org/download/nosferatu-1922_202504/Nosferatu%20(1922).mp4',
+    src: 'https://dn801200.us.archive.org/0/items/nosferatu-1922_202504/Nosferatu%20(1922).mp4',
+    fallbackSrc: 'https://archive.org/download/nosferatu-1922_202504/Nosferatu%20(1922).mp4',
     pageUrl: 'https://archive.org/details/nosferatu-1922_202504',
     credit: 'F.W. Murnau, public domain via Archive.org',
   },
   {
     label: 'night of the living dead (1968)',
-    src: 'https://archive.org/download/Night_of_the_Living_Dead_AVI/MoviePowderPresentsTheNightOfTheLivingDead_512kb.mp4',
+    src: 'https://dn600200.us.archive.org/0/items/Night_of_the_Living_Dead_AVI/MoviePowderPresentsTheNightOfTheLivingDead_512kb.mp4',
+    fallbackSrc: 'https://dn600200.us.archive.org/0/items/Night_of_the_Living_Dead_AVI/MoviePowderPresentsTheNightOfTheLivingDead.ogv',
     pageUrl: 'https://archive.org/details/Night_of_the_Living_Dead_AVI',
     credit: 'G. Romero, public domain via Archive.org',
   },
   {
     label: 'carnival of souls (1962)',
-    src: 'https://archive.org/download/CarnivalofSouls/CarnivalOfSouls_512kb.mp4',
+    src: 'https://dn600308.us.archive.org/0/items/CarnivalofSouls/CarnivalOfSouls_512kb.mp4',
+    fallbackSrc: 'https://dn600308.us.archive.org/0/items/CarnivalofSouls/CarnivalOfSouls.ogv',
     pageUrl: 'https://archive.org/details/CarnivalofSouls',
     credit: 'H. Harvey, public domain via Archive.org',
+  },
+  {
+    label: 'house on haunted hill (1959)',
+    src: 'https://dn800309.us.archive.org/0/items/house_on_haunted_hill_ipod/house_on_haunted_hill_512kb.mp4',
+    fallbackSrc: 'https://dn800309.us.archive.org/0/items/house_on_haunted_hill_ipod/house_on_haunted_hill.ogv',
+    pageUrl: 'https://archive.org/details/house_on_haunted_hill_ipod',
+    credit: 'W. Castle, public domain via Archive.org',
+  },
+  {
+    label: 'horror express (1972)',
+    src: 'https://dn800201.us.archive.org/0/items/horror_express_ipod/horror_express_512kb.mp4',
+    fallbackSrc: 'https://dn800201.us.archive.org/0/items/horror_express_ipod/horror_express.ogv',
+    pageUrl: 'https://archive.org/details/horror_express_ipod',
+    credit: 'E. Martín, public domain via Archive.org',
+  },
+  {
+    label: 'phantom of the opera (1925)',
+    src: 'https://dn600306.us.archive.org/0/items/ThePhantomoftheOpera/Phantom_of_the_Opera_512kb.mp4',
+    fallbackSrc: 'https://dn600306.us.archive.org/0/items/ThePhantomoftheOpera/Phantom_of_the_Opera.ogv',
+    pageUrl: 'https://archive.org/details/ThePhantomoftheOpera',
+    credit: 'R. Julian, public domain via Archive.org',
+  },
+  {
+    label: 'cabinet of dr. caligari (1920)',
+    src: 'https://dn600308.us.archive.org/0/items/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari/The_Cabinet_of_Dr._Caligari_512kb.mp4',
+    fallbackSrc: 'https://dn600308.us.archive.org/0/items/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari/The_Cabinet_of_Dr._Caligari.ogv',
+    pageUrl: 'https://archive.org/details/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari',
+    credit: 'R. Wiene, public domain via Archive.org',
+  },
+  {
+    label: 'häxan (1922)',
+    src: 'https://dn601206.us.archive.org/0/items/Haxan_tinted_and_subtitled/Haxan_512kb.mp4',
+    fallbackSrc: 'https://dn601206.us.archive.org/0/items/Haxan_tinted_and_subtitled/Haxan.ogv',
+    pageUrl: 'https://archive.org/details/Haxan_tinted_and_subtitled',
+    credit: 'B. Christensen, public domain via Archive.org',
+  },
+  {
+    label: 'white zombie (1932)',
+    src: 'https://dn800206.us.archive.org/0/items/white_zombie/white_zombie_512kb.mp4',
+    fallbackSrc: 'https://dn800206.us.archive.org/0/items/white_zombie/white_zombie.ogv',
+    pageUrl: 'https://archive.org/details/white_zombie',
+    credit: 'V. Halperin, public domain via Archive.org',
+  },
+  {
+    label: 'horror hotel (1960)',
+    src: 'https://dn800201.us.archive.org/0/items/Horror_Hotel/Horror_Hotel_512kb.mp4',
+    fallbackSrc: 'https://dn800201.us.archive.org/0/items/Horror_Hotel/Horror_Hotel.ogv',
+    pageUrl: 'https://archive.org/details/Horror_Hotel',
+    credit: 'J. Moxey, public domain via Archive.org',
   },
 ];
 
@@ -181,4 +240,13 @@ export function randomLoopWindow(durationSec: number): { start: number; len: num
     return { start: 0, len: Math.min(12, Math.max(4, durationSec - 0.5 || 8)) };
   }
   return { start: Math.random() * (durationSec - len - 0.5), len };
+}
+
+/** random 1–60s tape loop from a random point — never the beginning */
+export function randomAudioWindow(durationSec: number): { start: number; len: number } {
+  const len = 1 + Math.random() * 59;
+  if (!Number.isFinite(durationSec) || durationSec <= len + 1) {
+    return { start: 0, len: Math.max(1, durationSec - 0.5 || 8) };
+  }
+  return { start: 1 + Math.random() * (durationSec - len - 1), len };
 }

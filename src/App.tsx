@@ -8,6 +8,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useDepthTracker } from './effects/useDepthTracker';
 import { useViolentShake } from './effects/useViolentShake';
 import { horrorAudioEngine } from './audio/horrorAudioEngine';
+import { updateRadioDepth } from './audio/globalRadio';
 import { JumpscareEvent, JumpscareType } from './types/horror';
 import { WarningScreen } from './components/WarningScreen';
 import { HudStatus } from './components/HudStatus';
@@ -26,10 +27,11 @@ export default function App() {
 
   const randomJumpscareTimerRef = useRef<number | null>(null);
 
-  // Sync depth and corruption with audio engine
+  // Sync depth and corruption with audio engine + background radio voice
   useEffect(() => {
     if (hasEntered) {
       horrorAudioEngine.updateDepth(depthState.depthMeters, depthState.corruptionLevel);
+      updateRadioDepth(depthState.depthMeters);
     }
   }, [hasEntered, depthState.depthMeters, depthState.corruptionLevel]);
 

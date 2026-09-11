@@ -294,6 +294,7 @@ const HorrorTileInner: React.FC<HorrorTileProps> = ({
       {item.type === 'found-film' && item.extraMeta?.loopSrc ? (
         <CorruptedVideo
           src={String(item.extraMeta.loopSrc)}
+          fallbackSrc={item.extraMeta.loopFallback ? String(item.extraMeta.loopFallback) : undefined}
           pageUrl={String(item.extraMeta.pageUrl || item.extraMeta.sourceUrl || '')}
           label={String(item.extraMeta.loopCredit ? item.title : item.title)}
           credit={String(item.extraMeta.loopCredit || item.extraMeta.source || '')}
@@ -344,6 +345,7 @@ const HorrorTileInner: React.FC<HorrorTileProps> = ({
           speaker={String(item.extraMeta?.speaker || '')}
           audioUrl={item.extraMeta?.audioUrl ? String(item.extraMeta.audioUrl) : undefined}
           audioCredit={item.extraMeta?.audioCredit ? String(item.extraMeta.audioCredit) : undefined}
+          depthMeters={item.depthThreshold}
           isViolentShock={shouldShake}
         />
       )}
@@ -352,6 +354,7 @@ const HorrorTileInner: React.FC<HorrorTileProps> = ({
       {item.type === 'radio-scanner' && (
         <CursedRadioScanner
           initialFreq={String(item.extraMeta?.defaultFreq || '114.2 kHz')}
+          depthMeters={item.depthThreshold}
           isViolentShock={shouldShake}
         />
       )}
@@ -438,7 +441,7 @@ const HorrorTileInner: React.FC<HorrorTileProps> = ({
             if (k === 'buttonLabel' || k === 'optionA' || k === 'optionB') return null;
             if (k === 'linkUrl' || k === 'linkLabel' || k === 'linkKind') return null;
             if (k === 'source' || k === 'sourceUrl' || k === 'depthOffset') return null;
-            if (k === 'loopSrc' || k === 'pageUrl' || k === 'loopCredit') return null;
+            if (k === 'loopSrc' || k === 'loopFallback' || k === 'pageUrl' || k === 'loopCredit') return null;
             if (k === 'audioUrl' || k === 'audioCredit') return null;
             if (k === 'hasInteractiveWaveform' || k === 'isRadioScanner' || k === 'isHeartbeatSensor' || k === 'isCctvMatrix' || k === 'isRedacted' || k === 'redactionsCount' || k === 'disclosureRisk') return null;
             return (
@@ -450,7 +453,7 @@ const HorrorTileInner: React.FC<HorrorTileProps> = ({
         </div>
       )}
       <div className="mt-2 font-mono text-[9px] text-neutral-600">
-        sources: gutenberg (pd) / archive.org (pd) / commons (pd) / freesound (cc0/by)
+        sources: gutenberg (pd) / archive.org (pd) / wikimedia commons (pd)
       </div>
     </article>
   );
