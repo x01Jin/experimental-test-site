@@ -94,14 +94,13 @@ export const CursedRadioScanner: React.FC<CursedRadioScannerProps> = ({
   return (
     <div
       id="cursed-radio-scanner-card"
-      className={`my-3 p-3 rounded border border-amber-900/60 bg-neutral-950 font-mono text-xs ${
-        isViolentShock ? 'animate-artifact-spasm' : ''
-      }`}
+      className={`my-3 p-3 rounded border border-amber-900/60 bg-neutral-950 font-mono text-xs ${isViolentShock ? 'animate-artifact-spasm' : ''
+        }`}
     >
       <div className="flex items-center justify-between mb-2 text-[10px] text-amber-400">
         <div className="flex items-center gap-1.5 font-bold">
           <Radio className="w-3.5 h-3.5 animate-pulse" />
-          <span>old radio. it still picks up</span>
+          <span>radio</span>
         </div>
         <div className="flex items-center gap-1">
           {signalLocked ? (
