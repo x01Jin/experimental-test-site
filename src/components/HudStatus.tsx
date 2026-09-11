@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX, AlertTriangle, Skull, Activity, Flame } from 'lucide-react';
 import { DepthState } from '../types/horror';
 import { horrorAudioEngine } from '../audio/horrorAudioEngine';
+import { formatDepth, getBPM } from '../utils/depthScale';
 
 interface HudStatusProps {
   depthState: DepthState;
@@ -26,9 +27,9 @@ export const HudStatus: React.FC<HudStatusProps> = ({
   const [volume, setVolume] = useState(horrorAudioEngine.getVolume());
   const [heartRate, setHeartRate] = useState(74);
 
-  // Heart rate accelerates dynamically with depth and corruption
+  // Heart rate accelerates dynamically with depth and corruption (canonical curve)
   useEffect(() => {
-    const baseBpm = 70 + Math.floor((depthState.corruptionLevel / 100) * 115);
+    const baseBpm = getBPM(depthState.corruptionLevel);
     const interval = window.setInterval(() => {
       // Jitter heart rate by ±4
       setHeartRate(baseBpm + Math.floor(Math.random() * 8 - 4));
@@ -79,7 +80,7 @@ export const HudStatus: React.FC<HudStatusProps> = ({
           <div className="flex items-center gap-1.5">
             <span className="text-neutral-500">DEPTH:</span>
             <span className="text-white font-bold tracking-wider text-sm">
-              {depthState.depthMeters}m
+              {formatDepth(depthState.depthMeters)}
             </span>
           </div>
 

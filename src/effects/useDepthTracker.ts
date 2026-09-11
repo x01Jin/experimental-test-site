@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { DepthState, DepthTier } from '../types/horror';
+import { DepthState } from '../types/horror';
+import { scrollYToMeters, getCorruption, getDepthTier } from '../utils/depthScale';
 
 export function useDepthTracker() {
   const [depthState, setDepthState] = useState<DepthState>({
@@ -37,22 +38,13 @@ export function useDepthTracker() {
           lastScrollY.current = currentY;
           lastScrollTime.current = now;
 
-          // Depth calculation: 1 px = 0.4 meters
-          const meters = Math.floor(currentY * 0.4);
+          // Depth calculation: single source of truth (see depthScale.ts)
+          const meters = scrollYToMeters(currentY);
 
-          // Corruption level from 0 to 100+ based on meters (maxes out around 5000m)
-          const corruption = Math.min(100, Math.floor((meters / 4000) * 100));
+          // Corruption level 0-100, caps around 4000m
+          const corruption = getCorruption(meters);
 
-          let tier: DepthTier = 'surface';
-          if (meters >= 3500) {
-            tier = 'abyss';
-          } else if (meters >= 1800) {
-            tier = 'nightmare';
-          } else if (meters >= 600) {
-            tier = 'breakdown';
-          } else if (meters >= 150) {
-            tier = 'decay';
-          }
+          const tier = getDepthTier(meters);
 
           const isRapid = currentVelocity > 1.8;
 

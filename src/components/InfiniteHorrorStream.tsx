@@ -14,6 +14,7 @@ import { HORROR_TEMPLATES, NarrativeTemplate } from '../utils/scaryTexts';
 import { getRandomInternetImage, getSpecimenForNarrativeType } from '../utils/internetImages';
 import { generateProceduralHorrorItem } from '../utils/proceduralNarrative';
 import { generateLayoutChaos } from '../utils/layoutChaos';
+import { PX_TO_M, getCorruptionFraction, formatDepth } from '../utils/depthScale';
 import { HorrorTile } from './HorrorTile';
 import { AggressiveGlitchPattern, GlitchPatternType } from './AggressiveGlitchPattern';
 import { StructuralCollapseRibbon } from './StructuralCollapseRibbon';
@@ -43,12 +44,17 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
   }, [onTriggerJumpscare]);
 
   // Procedurally generate a batch of horror items with images and degradation attributes
+  // Thresholds are anchored to live scroll depth so banners never lag the HUD.
   const generateBatch = useCallback((startThreshold: number, count = 8): HorrorItem[] => {
     const newItems: HorrorItem[] = [];
-    const corruptionFrac = Math.min(1, startThreshold / 4000);
+    const corruptionFrac = getCorruptionFraction(startThreshold);
+
+    // Real-world tile cost: ~400-600px per card ≈ 160-240m. Step 45m/item lagged
+    // 5x behind live depth. Use 200m/item so fictional depth tracks scrollY*0.4.
+    const METERS_PER_ITEM = 200;
 
     for (let i = 0; i < count; i++) {
-      const threshold = startThreshold + i * 45;
+      const threshold = Math.floor(startThreshold + i * METERS_PER_ITEM);
 
       // Interleave combinatorial procedural items with curated hand-crafted horror lore
       if (i % 2 === 0) {
@@ -99,7 +105,7 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
     setItems(initialBatch);
   }, [generateBatch]);
 
-  // Infinite scroll replenishment trigger
+  // Infinite scroll replenishment trigger — anchored to live depth
   useEffect(() => {
     const handleScrollReplenish = () => {
       if (isLoadingRef.current) return;
@@ -112,7 +118,10 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
         isLoadingRef.current = true;
         setItems(prev => {
           const lastThreshold = prev.length > 0 ? prev[prev.length - 1].depthThreshold : 0;
-          const nextBatch = generateBatch(lastThreshold + 50, 8);
+          // Live depth estimate from actual document height — prevents 5x lag
+          const liveEstimate = Math.floor(docHeight * PX_TO_M);
+          const nextStart = Math.max(lastThreshold + 120, liveEstimate - 400);
+          const nextBatch = generateBatch(nextStart, 8);
           return [...prev, ...nextBatch];
         });
         setTimeout(() => {
@@ -236,7 +245,7 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
             <React.Fragment key={item.id}>
               {shouldRenderRibbon && (
                 <StructuralCollapseRibbon
-                  thresholdMeters={item.depthThreshold}
+                  thresholdMeters={Math.max(item.depthThreshold, depthState.depthMeters - 600)}
                   corruptionLevel={depthState.corruptionLevel}
                   variant={ribbonVariant}
                   seed={idx * 19}
@@ -257,7 +266,7 @@ export const InfiniteHorrorStream: React.FC<InfiniteHorrorStreamProps> = ({
               {shouldRenderVoid && (
                 <div className="py-8 sm:py-14 text-center select-none font-mono text-[10px] sm:text-xs text-red-600/70 tracking-[0.25em] uppercase pointer-events-none">
                   <div className="border-t border-b border-red-900/50 py-3 animate-pulse bg-red-950/10">
-                    --- [ANOMALOUS SPATIAL VOID // STRATA OFFSET -{(item.depthThreshold * 1.35).toFixed(0)}M // SECTOR RUPTURE DETECTED] ---
+                    --- [ANOMALOUS SPATIAL VOID // STRATA OFFSET {formatDepth(depthState.depthMeters)} // SECTOR RUPTURE DETECTED] ---
                   </div>
                 </div>
               )}

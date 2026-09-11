@@ -5,6 +5,9 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // GitHub Pages project site: https://<USER>.github.io/the-infinite-creep/
+    // Must match repo name. Use '/' only for user site (<USER>.github.io) or custom domain.
+    base: '/the-infinite-creep/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

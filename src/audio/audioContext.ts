@@ -8,7 +8,7 @@ class AudioCore {
   private masterGainNode: GainNode | null = null;
   private limiterNode: DynamicsCompressorNode | null = null;
   private isUnlocked = false;
-  private volume = 0.75;
+  private volume = 0.9;
   private isMuted = false;
 
   public getContext(): AudioContext {
@@ -16,9 +16,10 @@ class AudioCore {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       this.ctx = new AudioCtx();
 
-      // Master limiter to keep audio terrifying but safe from hard driver clipping
+      // Master limiter: loud broken-machine crashes but safe from driver clipping.
+      // Threshold -1dB (was -3dB) lets hard-clipped BSOD transients through.
       this.limiterNode = this.ctx.createDynamicsCompressor();
-      this.limiterNode.threshold.setValueAtTime(-3, this.ctx.currentTime);
+      this.limiterNode.threshold.setValueAtTime(-1, this.ctx.currentTime);
       this.limiterNode.knee.setValueAtTime(4, this.ctx.currentTime);
       this.limiterNode.ratio.setValueAtTime(16, this.ctx.currentTime);
       this.limiterNode.attack.setValueAtTime(0.002, this.ctx.currentTime);

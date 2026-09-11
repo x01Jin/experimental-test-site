@@ -7,6 +7,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Activity, Heart, AlertOctagon } from 'lucide-react';
 import { horrorAudioEngine } from '../audio/horrorAudioEngine';
+import { getBPM } from '../utils/depthScale';
 
 interface HeartbeatMonitorProps {
   baseBpm?: number;
@@ -21,7 +22,9 @@ export const HeartbeatMonitor: React.FC<HeartbeatMonitorProps> = ({
 }) => {
   const [pulseActive, setPulseActive] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const effectiveBpm = Math.min(168, Math.floor(baseBpm + (corruptionLevel / 100) * 55));
+  // Canonical BPM curve (70-185), seeded from item base then driven by live corruption
+  const liveBpm = getBPM(corruptionLevel);
+  const effectiveBpm = Math.min(185, Math.max(liveBpm, Math.min(185, baseBpm + Math.floor((corruptionLevel / 100) * 20))));
   const animRef = useRef<number | null>(null);
 
   const triggerManualPulse = () => {

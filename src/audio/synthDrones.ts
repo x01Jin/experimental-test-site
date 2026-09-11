@@ -52,11 +52,12 @@ export class AmbientDroneSynth {
     this.subOsc.type = 'sine';
     this.subOsc.frequency.setValueAtTime(28, now);
 
-    // LFO for slow breathing/throbbing filter sweeps
+    // Glacial LFO for dread drift (was 0.12Hz throbbing → bouncy at 1.92Hz deep).
+    // Research: 0.001–0.25Hz reads as evolving dread, >1Hz reads as bounce.
     this.lfo = ctx.createOscillator();
-    this.lfo.frequency.setValueAtTime(0.12, now);
+    this.lfo.frequency.setValueAtTime(0.06, now);
     this.lfoGain = ctx.createGain();
-    this.lfoGain.gain.setValueAtTime(60, now);
+    this.lfoGain.gain.setValueAtTime(35, now);
 
     this.lfo.connect(this.lfoGain);
     this.lfoGain.connect(this.filterNode.frequency);
@@ -116,8 +117,8 @@ export class AmbientDroneSynth {
     const targetFreq = 100 + c * 450;
     this.filterNode.frequency.setTargetAtTime(targetFreq, now, 0.4);
 
-    // LFO accelerates
-    const targetLfoRate = 0.12 + c * 1.8;
+    // LFO stays glacial even at abyss (max 0.25Hz) — dread, not bounce
+    const targetLfoRate = 0.06 + c * 0.19;
     this.lfo.frequency.setTargetAtTime(targetLfoRate, now, 0.4);
 
     // Noise bed becomes louder and harsher

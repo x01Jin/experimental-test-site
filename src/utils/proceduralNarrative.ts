@@ -13,6 +13,7 @@
 import { HorrorItem, HorrorItemType, DepthTier } from '../types/horror';
 import { getSpecimenForNarrativeType } from './internetImages';
 import { generateLayoutChaos } from './layoutChaos';
+import { getDepthTier as canonicalTier, getVisualIntensity, getBPM, formatDepth } from './depthScale';
 
 const SECTOR_NAMES = [
   'SECTOR 04-G // SUB-AQUIFER',
@@ -138,14 +139,10 @@ const PSYCH_SURVEYS = [
 ];
 
 /**
- * Computes depth tier from raw depth in meters
+ * Computes depth tier from raw depth in meters (canonical — see depthScale.ts)
  */
 export function getDepthTier(depthMeters: number): DepthTier {
-  if (depthMeters < 500) return 'surface';
-  if (depthMeters < 1200) return 'decay';
-  if (depthMeters < 2400) return 'breakdown';
-  if (depthMeters < 4000) return 'nightmare';
-  return 'abyss';
+  return canonicalTier(depthMeters);
 }
 
 /**
@@ -157,7 +154,7 @@ export function generateProceduralHorrorItem(
   uniqueSeed: number
 ): HorrorItem {
   const tier = getDepthTier(depthMeters);
-  const corruptionFraction = Math.min(1.2, depthMeters / 4200);
+  const corruptionFraction = getVisualIntensity(depthMeters);
 
   // Diverse rotation of archetypes based on depth tier
   const archetypePool: HorrorItemType[] = [];
@@ -184,7 +181,7 @@ export function generateProceduralHorrorItem(
   let extraMeta: Record<string, string | number | boolean> = {
     sector,
     clearance,
-    depthOffset: `${depthMeters}m`
+    depthOffset: formatDepth(depthMeters)
   };
 
   switch (selectedType) {
@@ -248,7 +245,7 @@ export function generateProceduralHorrorItem(
       title = `BIOMETRIC TELEMETRY MONITOR // SUBJECT #0`;
       content = `REAL-TIME CARDIAC PULSE SENSOR: Continuous monitoring of user autonomic response. As depth increases, cardiac irregularity indices rise exponentially. Keep your fingers steady on the sensor.`;
       extraMeta.isHeartbeatSensor = true;
-      extraMeta.currentBpm = 72 + Math.floor(corruptionFraction * 48);
+      extraMeta.currentBpm = getBPM(Math.min(100, Math.floor(corruptionFraction * 100)));
       break;
     }
 
@@ -297,7 +294,7 @@ export function generateProceduralHorrorItem(
     case 'incident-report':
     case 'distress-log':
     default: {
-      title = `INCIDENT LOG // STRATA LEVEL -${depthMeters}M`;
+      title = `INCIDENT LOG // STRATA LEVEL ${formatDepth(depthMeters)}`;
       content = `FACILITY TELEMETRY: Pressure gauges have shattered. Atmospheric condensation is warm, red, and smells of copper. The security team sent to investigate the bottom shaft has ceased using words and now communicates only in teeth grinding.`;
       extraMeta.casualtyCount = 14 + Math.floor(depthMeters / 100);
       extraMeta.airQuality = 'SUFFOCATING';

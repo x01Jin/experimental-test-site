@@ -23,11 +23,8 @@ export type AmbientEventType =
   | 'muttering-chorus'
   | 'metal-groan'
   | 'cardiac-pulse'
-  | 'cistern-drip'
   | 'geiger-burst'
-  | 'pressure-vent'
-  | 'numbers-station'
-  | 'radio-sweep';
+  | 'pressure-vent';
 
 class HorrorAudioEngine {
   private droneSynth = new AmbientDroneSynth();
@@ -82,17 +79,18 @@ class HorrorAudioEngine {
   public triggerVariedAmbientSound(): void {
     if (!this.isInitialized || audioCore.getIsMuted()) return;
 
+    // Weighted pool: broken-pc dominant for loud long crashed-machine bed.
+    // Bouncy/cartoon events (cistern-drip sine pluck, numbers-station beeps,
+    // radio-sweep slide-whistle) removed from ambient — kept only for explicit UI.
     const availableEvents: AmbientEventType[] = [
+      'broken-pc',
       'broken-pc',
       'vocal-whisper',
       'muttering-chorus',
       'metal-groan',
       'cardiac-pulse',
-      'cistern-drip',
       'geiger-burst',
-      'pressure-vent',
-      'numbers-station',
-      'radio-sweep'
+      'pressure-vent'
     ];
 
     // Filter out the immediate previous event to prevent consecutive repetition
@@ -118,39 +116,29 @@ class HorrorAudioEngine {
       case 'cardiac-pulse':
         atmosphereSynth.playCardiacThump(intensity);
         break;
-      case 'cistern-drip':
-        atmosphereSynth.playCaveDrip(intensity);
-        break;
       case 'geiger-burst':
         atmosphereSynth.playGeigerBurst(intensity, 8 + Math.floor(this.currentCorruption * 14));
         break;
       case 'pressure-vent':
         atmosphereSynth.playPressureVent(intensity);
         break;
-      case 'numbers-station':
-        horrorStabsSynth.playNumbersStationBeeps(intensity, 4 + Math.floor(Math.random() * 3));
-        break;
-      case 'radio-sweep':
-        horrorStabsSynth.playRadioFrequencySweep(intensity);
-        break;
     }
   }
 
   /**
-   * Triggered on user interactions with anomaly cards or warnings
+   * Triggered on user interactions with anomaly cards or warnings.
+   * Broken-machine only — no bouncy beeps/drips.
    */
   public triggerAggressiveEvent(intensity = 1): void {
     if (!this.isInitialized || audioCore.getIsMuted()) return;
 
     const roll = Math.random();
-    if (roll < 0.3) {
+    if (roll < 0.4) {
       brokenComputerSynth.triggerRandomGlitch(intensity);
-    } else if (roll < 0.55) {
+    } else if (roll < 0.6) {
       vocalWhisperSynth.playEerieWhisper(intensity);
-    } else if (roll < 0.75) {
+    } else if (roll < 0.8) {
       horrorStabsSynth.playElectricalArc(intensity);
-    } else if (roll < 0.9) {
-      horrorStabsSynth.playBoneSnap(intensity);
     } else {
       screamStaticSynth.playPiercingStaticBurst(intensity);
     }
@@ -168,33 +156,33 @@ class HorrorAudioEngine {
 
     switch (shockRecipe) {
       case 0:
-        // Recipe 1: Microtonal cluster screech + bone snap + sub bass thud
+        // Recipe 1: Low crushed cluster + sustained static blast + sub thud
         horrorStabsSynth.playDissonantCluster(effectiveIntensity);
-        horrorStabsSynth.playBoneSnap(effectiveIntensity);
+        screamStaticSynth.playPiercingStaticBurst(effectiveIntensity * 1.2, 1.8);
         screamStaticSynth.playSubBassThud(0, effectiveIntensity);
         break;
       case 1:
-        // Recipe 2: High-voltage electrical explosion + static tear
+        // Recipe 2: High-voltage electrical explosion + sustained static tear
         horrorStabsSynth.playElectricalArc(effectiveIntensity * 1.2);
-        screamStaticSynth.playPiercingStaticBurst(effectiveIntensity);
+        screamStaticSynth.playPiercingStaticBurst(effectiveIntensity, 2.0);
         break;
       case 2:
-        // Recipe 3: Brutal DMA hardware freeze + muttering chorus
-        brokenComputerSynth.playBsodLockup(effectiveIntensity * 1.3, 0.35);
+        // Recipe 3: Brutal sustained DMA hardware freeze + muttering chorus
+        brokenComputerSynth.playBsodLockup(effectiveIntensity * 1.3, 1.8);
         vocalWhisperSynth.playMutteringChorus(effectiveIntensity);
         horrorStabsSynth.playSubVoidDrop(effectiveIntensity);
         break;
       case 3:
-        // Recipe 4: Hardware crash screech + sub void dive
+        // Recipe 4: Sustained hardware crash screech + sub void lock
         screamStaticSynth.playHardwareCrashScreech(effectiveIntensity);
         horrorStabsSynth.playSubVoidDrop(effectiveIntensity);
         break;
       case 4:
       default:
-        // Recipe 5: Layered static blast + bone snap + pitch-stretched noise
-        screamStaticSynth.playPiercingStaticBurst(effectiveIntensity * 1.2);
-        horrorStabsSynth.playBoneSnap(effectiveIntensity);
-        brokenComputerSynth.playPitchStretchedStatic(effectiveIntensity);
+        // Recipe 5: Layered sustained static blast + pitch-stretched noise
+        screamStaticSynth.playPiercingStaticBurst(effectiveIntensity * 1.2, 2.2);
+        brokenComputerSynth.playPitchStretchedStatic(effectiveIntensity, 1.6);
+        brokenComputerSynth.playBsodLockup(effectiveIntensity, 1.5);
         break;
     }
   }

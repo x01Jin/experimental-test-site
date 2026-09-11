@@ -22,6 +22,8 @@ Explore the modules and mechanics:
    - Dynamic canvas degradation pipeline, internet specimen repository, downsampled pixelation, RGB channel displacement, solarization, demonic biometric additions, and floating fragment shards.
 7. [Layout Chaos & Structural Breakdown Engine](layout-chaos.md)
    - Procedural layout instability, non-Euclidean transforms, asymmetric card widths and alignments, negative-margin collisions, jagged polygonal clipping, erratic padding, detached stamps, chromatic ghost duplicates, and structural collapse ribbons.
+8. [Deployment — GitHub Pages](deployment.md)
+   - `gh-pages` branch deploys, `base` config, `npm run deploy`, Pages settings, SPA fallback, troubleshooting.
 
 ---
 

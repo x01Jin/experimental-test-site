@@ -37,7 +37,8 @@ export class AtmosphereSynth {
     mod.frequency.linearRampToValueAtTime(baseFreq * 1.25, now + duration);
 
     const modGain = ctx.createGain();
-    modGain.gain.setValueAtTime(baseFreq * 1.5, now);
+    // Shallow FM (was base*1.5 deep wobble → bouncy). 0.2 keeps metallic dread without vibrato.
+    modGain.gain.setValueAtTime(baseFreq * 0.2, now);
     mod.connect(modGain);
     modGain.connect(carrier.frequency);
 

@@ -14,6 +14,18 @@ Comprehensive documentation of all architectural components, audio synthesis sys
   - [Visual Effects & Jumpscares](docs/visual-effects.md)
   - [Image Corruption Engine & Visual Decay](docs/image-corruption.md)
   - [Layout Chaos & Structural Breakdown Engine](docs/layout-chaos.md)
+  - [Deployment — GitHub Pages](docs/deployment.md)
+
+## Deployment
+
+```powershell
+npm run build    # verify prod build + 404.html fallback
+npm run deploy   # gh-pages -d dist → gh-pages branch
+```
+
+Settings → Pages → Source: Deploy from branch → `gh-pages / (root)`.
+Live at `https://<USERNAME>.github.io/the-infinite-creep/`.
+Full guide: [docs/deployment.md](docs/deployment.md).
 
 ## Core Capabilities
 

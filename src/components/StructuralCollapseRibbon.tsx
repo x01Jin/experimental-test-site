@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { zalgoText } from '../utils/zalgo';
+import { formatDepth } from '../utils/depthScale';
 
 interface StructuralCollapseRibbonProps {
   thresholdMeters: number;
@@ -46,7 +47,7 @@ export const StructuralCollapseRibbon: React.FC<StructuralCollapseRibbonProps> =
     >
       <div className="whitespace-nowrap flex gap-8 animate-pulse">
         <span>⚠ {renderedText} ⚠</span>
-        <span>[{thresholdMeters}m DEPTH]</span>
+        <span>[{formatDepth(thresholdMeters)} DEPTH]</span>
         <span>⚠ {renderedText} ⚠</span>
         <span>[CORRUPTION: {Math.floor(corruptionLevel)}%]</span>
       </div>

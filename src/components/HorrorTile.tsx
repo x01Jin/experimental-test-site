@@ -28,6 +28,7 @@ import {
   Volume2
 } from 'lucide-react';
 import { drawTrackingEye } from '../effects/nightmareFaces';
+import { formatDepth } from '../utils/depthScale';
 import { CorruptedImage } from './CorruptedImage';
 import { RedactedText } from './RedactedText';
 import { InteractiveAudioLog } from './InteractiveAudioLog';
@@ -53,10 +54,10 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const eyeCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Local corruption combines global corruption + item threshold severity
+  // Local corruption: global 0-100 scaled + small item variance (no double-count)
   const effectiveCorruption = Math.min(
     1.2,
-    (globalCorruption / 100) * 0.75 + item.glitchSeverity * 0.45
+    globalCorruption / 100 + Math.min(0.3, Math.max(0, item.glitchSeverity) * 0.2)
   );
 
   const corruptedTitle = zalgoText(item.title, effectiveCorruption * 0.35);
@@ -251,7 +252,7 @@ export const HorrorTile: React.FC<HorrorTileProps> = ({
         </div>
 
         <span className="text-[10px] tracking-widest text-neutral-500 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800">
-          THRESHOLD: {item.depthThreshold}m
+          THRESHOLD: {formatDepth(item.depthThreshold)}
         </span>
       </div>
 

@@ -6,6 +6,7 @@
  */
 
 import { DepthTier } from '../types/horror';
+import { getVisualIntensity } from './depthScale';
 
 export type LayoutAlignment =
   | 'center'
@@ -98,7 +99,7 @@ export function generateLayoutChaos(
   batchIndex: number
 ): LayoutChaosProfile {
   const seed = depthThreshold * 13 + itemIndex * 37 + batchIndex * 101;
-  const corruptionFrac = Math.min(1.2, depthThreshold / 4000);
+  const corruptionFrac = getVisualIntensity(depthThreshold);
 
   // Surface Tier (0 - 400m): Orderly, clinical, uniform structure
   if (corruptionFrac < 0.1) {

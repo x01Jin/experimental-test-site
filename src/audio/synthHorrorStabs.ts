@@ -9,7 +9,7 @@ import { audioCore } from './audioContext';
 export class HorrorStabsSynth {
   /**
    * Dissonant microtonal cluster chord screech (Penderecki Threnody style).
-   * Multiple quarter-tone detuned sine/saw oscillators creating horrifying acoustic beating.
+   * Low crushing register (110–330Hz) sustained — was 660–1760Hz squeaky.
    */
   public playDissonantCluster(intensity = 1): void {
     const ctx = audioCore.getContext();
@@ -17,10 +17,10 @@ export class HorrorStabsSynth {
     if (!master || audioCore.getIsMuted()) return;
 
     const now = ctx.currentTime;
-    const duration = 0.35 + Math.random() * 0.45;
+    const duration = 1.0 + Math.random() * 1.2;
 
-    // Cluster root pitch
-    const rootPitches = [660, 880, 1174, 1480, 1760];
+    // Cluster root pitch — low crushed register
+    const rootPitches = [110, 147, 185, 220, 262, 330];
     const root = rootPitches[Math.floor(Math.random() * rootPitches.length)];
 
     // Microtonal offsets in Hz (creating dense, nauseating acoustic friction)
@@ -29,28 +29,33 @@ export class HorrorStabsSynth {
     const clusterGain = ctx.createGain();
     const peakVol = Math.min(0.38 * intensity, 0.65);
     clusterGain.gain.setValueAtTime(peakVol, now);
-    clusterGain.gain.setValueAtTime(peakVol * 0.8, now + duration * 0.7);
+    clusterGain.gain.setValueAtTime(peakVol * 0.85, now + duration * 0.8);
     clusterGain.gain.linearRampToValueAtTime(0.0001, now + duration);
 
-    // Highpass filter to strip muddiness and accentuate piercing shriek
+    // Lowpass to keep body, strip squeaky highs (was highpass 500)
     const hp = ctx.createBiquadFilter();
-    hp.type = 'highpass';
-    hp.frequency.setValueAtTime(500, now);
+    hp.type = 'lowpass';
+    hp.frequency.setValueAtTime(2400, now);
 
+    const oscs: OscillatorNode[] = [];
     offsets.forEach(offset => {
       const osc = ctx.createOscillator();
-      osc.type = Math.random() > 0.5 ? 'sawtooth' : 'triangle';
-      osc.frequency.setValueAtTime(root + offset, now);
-      // Slight pitch waver
-      osc.frequency.linearRampToValueAtTime(root + offset + (Math.random() - 0.5) * 30, now + duration);
+      osc.type = Math.random() > 0.5 ? 'sawtooth' : 'square';
+      osc.frequency.setValueAtTime(Math.max(30, root + offset), now);
+      // Minimal drift (±5Hz) — was ±15Hz seasick waver
+      osc.frequency.linearRampToValueAtTime(root + offset + (Math.random() - 0.5) * 10, now + duration);
 
       osc.connect(hp);
       osc.start(now);
       osc.stop(now + duration);
+      oscs.push(osc);
     });
 
     hp.connect(clusterGain);
     clusterGain.connect(master);
+    oscs[0].onended = () => {
+      try { oscs.forEach(o => o.disconnect()); hp.disconnect(); clusterGain.disconnect(); } catch { /* noop */ }
+    };
   }
 
   /**
@@ -144,7 +149,8 @@ export class HorrorStabsSynth {
   }
 
   /**
-   * Sub-bass void drop: Visceral seismic bass dive shaking headphones.
+   * Sub-bass void lock: sustained distorted low freeze (was cartoon 110→20Hz dive).
+   * Flat 55–90Hz saw+square + stutter, 1.2–2.2s — broken-machine weight, no fall.
    */
   public playSubVoidDrop(intensity = 1): void {
     const ctx = audioCore.getContext();
@@ -152,23 +158,49 @@ export class HorrorStabsSynth {
     if (!master || audioCore.getIsMuted()) return;
 
     const now = ctx.currentTime;
-    const duration = 0.8 + Math.random() * 0.6;
+    const duration = 1.2 + Math.random() * 1.0;
 
-    const sub = ctx.createOscillator();
-    sub.type = 'sine';
-    sub.frequency.setValueAtTime(110, now);
-    sub.frequency.exponentialRampToValueAtTime(20, now + duration);
+    const baseFreq = 55 + Math.random() * 35;
+    const sub1 = ctx.createOscillator();
+    sub1.type = 'sawtooth';
+    sub1.frequency.setValueAtTime(baseFreq, now);
+
+    const sub2 = ctx.createOscillator();
+    sub2.type = 'square';
+    sub2.frequency.setValueAtTime(baseFreq * 1.01, now);
+
+    const stutter = ctx.createOscillator();
+    stutter.type = 'square';
+    stutter.frequency.setValueAtTime(28 + Math.random() * 20, now);
+    const stutterGain = ctx.createGain();
+    stutterGain.gain.setValueAtTime(0.5, now);
+    stutter.connect(stutterGain.gain);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, now);
 
     const gain = ctx.createGain();
     const vol = Math.min(0.45 * intensity, 0.7);
     gain.gain.setValueAtTime(vol, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    gain.gain.setValueAtTime(vol, now + duration * 0.85);
+    gain.gain.linearRampToValueAtTime(0.0001, now + duration);
 
-    sub.connect(gain);
+    sub1.connect(filter);
+    sub2.connect(filter);
+    filter.connect(stutterGain);
+    stutterGain.connect(gain);
     gain.connect(master);
 
-    sub.start(now);
-    sub.stop(now + duration);
+    sub1.start(now);
+    sub2.start(now);
+    stutter.start(now);
+    sub1.stop(now + duration);
+    sub2.stop(now + duration);
+    stutter.stop(now + duration);
+    sub1.onended = () => {
+      try { sub1.disconnect(); sub2.disconnect(); stutter.disconnect(); stutterGain.disconnect(); filter.disconnect(); gain.disconnect(); } catch { /* noop */ }
+    };
   }
 
   /**

@@ -31,8 +31,8 @@ export class ScreamStaticSynth {
     if (!master || audioCore.getIsMuted()) return;
 
     const now = ctx.currentTime;
-    // Duration randomly varies (e.g. 80ms to 420ms)
-    const duration = customDuration || (0.08 + Math.random() * 0.32 * Math.min(intensity, 2));
+    // Sustained burst: 1.2s–2.2s flat + hard cut (was 80–400ms pluck)
+    const duration = customDuration || (1.2 + Math.random() * 1.0 * Math.min(intensity, 2));
 
     // High energy white / pink digital noise
     const bufferSize = Math.floor(ctx.sampleRate * Math.max(duration * 2, 0.4));
@@ -60,9 +60,9 @@ export class ScreamStaticSynth {
 
     const gain = ctx.createGain();
     const maxGain = Math.min(0.48 * intensity, 0.75);
-    // Instantaneous 0ms digital attack
+    // Instantaneous 0ms digital attack, flat sustain, hard cut
     gain.gain.setValueAtTime(maxGain, now);
-    gain.gain.setValueAtTime(maxGain * 0.9, now + duration * 0.8);
+    gain.gain.setValueAtTime(maxGain * 0.9, now + duration * 0.85);
     gain.gain.linearRampToValueAtTime(0.0001, now + duration);
 
     noiseSource.connect(filter);
@@ -71,6 +71,9 @@ export class ScreamStaticSynth {
 
     noiseSource.start(now);
     noiseSource.stop(now + duration);
+    noiseSource.onended = () => {
+      try { noiseSource.disconnect(); filter.disconnect(); gain.disconnect(); } catch { /* noop */ }
+    };
   }
 
   /**
@@ -83,11 +86,11 @@ export class ScreamStaticSynth {
     if (!master || audioCore.getIsMuted()) return;
 
     const now = ctx.currentTime;
-    // Duration randomly adjusts: 0.18s to 0.48s
-    const duration = 0.16 + Math.random() * 0.3 * Math.min(intensity, 1.8);
+    // Sustained lockup screech: 1.5s–2.8s (was 0.16–0.46s)
+    const duration = 1.5 + Math.random() * 1.3 * Math.min(intensity, 1.8);
 
-    // Primary carrier tuned to harsh electronic crash pitches (no downward slide!)
-    const crashFreqs = [880, 1174, 1480, 1760, 2217, 2637];
+    // Low crushed crash pitches (was 880–2637Hz squeal) — broken machine grind
+    const crashFreqs = [110, 147, 185, 220, 294, 370];
     const baseFreq = crashFreqs[Math.floor(Math.random() * crashFreqs.length)];
 
     const carrier1 = ctx.createOscillator();
@@ -108,9 +111,10 @@ export class ScreamStaticSynth {
     modulator.connect(carrier1.frequency);
     modulator.connect(carrier2.frequency);
 
-    // WaveShaper distortion node
+    // WaveShaper distortion node (4x oversample for harsh highs)
     const distortion = ctx.createWaveShaper();
     distortion.curve = this.distortionCurve;
+    distortion.oversample = '4x';
 
     // Resonant bandpass filter
     const filter = ctx.createBiquadFilter();
@@ -138,9 +142,15 @@ export class ScreamStaticSynth {
     carrier1.stop(now + duration);
     carrier2.stop(now + duration);
     modulator.stop(now + duration);
+    carrier1.onended = () => {
+      try {
+        carrier1.disconnect(); carrier2.disconnect(); modulator.disconnect();
+        modGain.disconnect(); distortion.disconnect(); filter.disconnect(); gain.disconnect();
+      } catch { /* noop */ }
+    };
 
     // Layer with pitch-stretched static tear
-    this.playPiercingStaticBurst(intensity * 1.1, duration * 0.9);
+    this.playPiercingStaticBurst(intensity * 1.1, Math.min(duration * 0.9, 2.2));
     // Layer with abrupt hardware power-loss thud
     this.playSubBassThud(now, intensity);
   }
@@ -166,16 +176,19 @@ export class ScreamStaticSynth {
 
     osc.type = 'sine';
     osc.frequency.setValueAtTime(55, now);
-    osc.frequency.linearRampToValueAtTime(25, now + 0.15);
+    osc.frequency.linearRampToValueAtTime(30, now + 0.3);
 
     gain.gain.setValueAtTime(Math.min(0.45 * intensity, 0.7), now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
 
     osc.connect(gain);
     gain.connect(master);
 
     osc.start(now);
-    osc.stop(now + 0.23);
+    osc.stop(now + 0.46);
+    osc.onended = () => {
+      try { osc.disconnect(); gain.disconnect(); } catch { /* noop */ }
+    };
   }
 }
 

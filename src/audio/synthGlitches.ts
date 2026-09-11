@@ -35,8 +35,8 @@ export class BrokenComputerSynth {
     if (!master || audioCore.getIsMuted()) return;
 
     const now = ctx.currentTime;
-    // Random duration: typically 0.12s to 0.45s, or custom
-    const duration = customDuration || (0.12 + Math.random() * 0.35 * Math.min(intensity, 2));
+    // Sustained lockup: 1.2s–2.8s so it reads as a loud broken crash, not a pluck.
+    const duration = customDuration || (1.2 + Math.random() * 1.6 * Math.min(intensity, 2));
 
     // Choose authentic crash fundamental frequencies (73Hz, 98Hz, 123Hz, 147Hz, 185Hz, 240Hz, 330Hz)
     const crashFreqs = [73, 98, 123, 147, 185, 220, 261, 330];
@@ -65,9 +65,10 @@ export class BrokenComputerSynth {
     stutterGain.gain.setValueAtTime(0.4, now);
     stutterLfo.connect(stutterGain.gain);
 
-    // Distortion WaveShaper
+    // Distortion WaveShaper (4x oversample reduces aliasing on harsh highs)
     const distortion = ctx.createWaveShaper();
     distortion.curve = this.clipCurve;
+    distortion.oversample = '4x';
 
     // Resonant bandpass to shape harsh chassis buzz
     const filter = ctx.createBiquadFilter();
@@ -97,6 +98,16 @@ export class BrokenComputerSynth {
     osc1.stop(now + duration);
     osc2.stop(now + duration);
     stutterLfo.stop(now + duration);
+
+    // Prevent long-session graph leaks
+    const cleanup = () => {
+      try {
+        osc1.disconnect(); osc2.disconnect(); stutterLfo.disconnect();
+        stutterGain.disconnect(); distortion.disconnect();
+        filter.disconnect(); mainGain.disconnect();
+      } catch { /* already disconnected */ }
+    };
+    osc1.onended = cleanup;
   }
 
   /**
@@ -108,8 +119,8 @@ export class BrokenComputerSynth {
     if (!master || audioCore.getIsMuted()) return;
 
     const now = ctx.currentTime;
-    // Duration randomly varies from ultra-short 60ms click to 450ms static tear
-    const duration = customDuration || (0.06 + Math.random() * 0.34);
+    // Sustained static tear: 1.0s–2.2s flat sustain + hard cut (was 60–400ms pluck)
+    const duration = customDuration || (1.0 + Math.random() * 1.2);
 
     // Create noise buffer with discrete quantized bit-steps
     const sampleCount = Math.floor(ctx.sampleRate * Math.max(duration * 2, 0.4));
@@ -142,7 +153,9 @@ export class BrokenComputerSynth {
     const volume = Math.min(0.35 * intensity, 0.6);
     gain.gain.setValueAtTime(0.001, now);
     gain.gain.linearRampToValueAtTime(volume, now + 0.003); // 3ms attack
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    // Flat broken-machine sustain, then hard digital cut (no bouncy exp decay)
+    gain.gain.setValueAtTime(volume, now + duration * 0.85);
+    gain.gain.linearRampToValueAtTime(0.0001, now + duration);
 
     source.connect(filter);
     filter.connect(gain);
@@ -150,11 +163,14 @@ export class BrokenComputerSynth {
 
     source.start(now);
     source.stop(now + duration);
+    source.onended = () => {
+      try { source.disconnect(); filter.disconnect(); gain.disconnect(); } catch { /* noop */ }
+    };
   }
 
   /**
-   * Memory bus parity squeal / register overflow error.
-   * Sharp, discrete register jumps (no cartoon slides!).
+   * Memory bus parity growl / register overflow error.
+   * Low-register (90–240Hz) sustained grind — was 880–3520Hz squeaky hops.
    */
   public playMemoryBusParitySqueal(intensity = 1): void {
     const ctx = audioCore.getContext();
@@ -162,13 +178,13 @@ export class BrokenComputerSynth {
     if (!master || audioCore.getIsMuted()) return;
 
     const now = ctx.currentTime;
-    const duration = 0.14 + Math.random() * 0.16;
+    const duration = 0.7 + Math.random() * 0.6;
 
     const osc = ctx.createOscillator();
-    osc.type = 'square';
+    osc.type = 'sawtooth';
 
-    // Discrete register jumps (no slide, instantaneous pitch hops)
-    const registers = [1760, 880, 2349, 1174, 3520];
+    // Low discrete register grind (no cartoon slides, no squeaky highs)
+    const registers = [92, 110, 138, 165, 196, 233];
     const stepCount = 4;
     for (let s = 0; s < stepCount; s++) {
       const stepTime = now + (duration / stepCount) * s;
@@ -176,21 +192,31 @@ export class BrokenComputerSynth {
       osc.frequency.setValueAtTime(regFreq, stepTime);
     }
 
+    const distortion = ctx.createWaveShaper();
+    distortion.curve = this.clipCurve;
+    distortion.oversample = '4x';
+
     const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(2200, now);
-    filter.Q.setValueAtTime(4, now);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(900, now);
+    filter.Q.setValueAtTime(2, now);
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(Math.min(0.24 * intensity, 0.45), now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    const peak = Math.min(0.3 * intensity, 0.55);
+    gain.gain.setValueAtTime(peak, now);
+    gain.gain.setValueAtTime(peak, now + duration * 0.85);
+    gain.gain.linearRampToValueAtTime(0.0001, now + duration);
 
-    osc.connect(filter);
+    osc.connect(distortion);
+    distortion.connect(filter);
     filter.connect(gain);
     gain.connect(master);
 
     osc.start(now);
     osc.stop(now + duration);
+    osc.onended = () => {
+      try { osc.disconnect(); distortion.disconnect(); filter.disconnect(); gain.disconnect(); } catch { /* noop */ }
+    };
   }
 
   /**
@@ -225,14 +251,15 @@ export class BrokenComputerSynth {
 
   /**
    * Randomly triggers one of the authentic computer crash sounds.
+   * Weighted to sustained BSOD/static (loud long broken), growl relay rare.
    */
   public triggerRandomGlitch(intensity = 1): void {
     const roll = Math.random();
-    if (roll < 0.45) {
+    if (roll < 0.5) {
       this.playBsodLockup(intensity);
-    } else if (roll < 0.8) {
+    } else if (roll < 0.88) {
       this.playPitchStretchedStatic(intensity);
-    } else if (roll < 0.92) {
+    } else if (roll < 0.96) {
       this.playMemoryBusParitySqueal(intensity);
     } else {
       this.playHardwareRelayTrip(intensity);
@@ -253,7 +280,7 @@ export class BrokenComputerSynth {
   }
 
   public playBufferStutter(intensity = 1): void {
-    this.playBsodLockup(intensity * 1.2, 0.22);
+    this.playBsodLockup(intensity * 1.2, 1.4);
   }
 }
 
